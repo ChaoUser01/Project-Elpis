@@ -1,0 +1,150 @@
+^C:\USERS\AWESK\DESKTOP\ELPIS\BUILD\_DEPS\HTTPLIB-SUBBUILD\CMAKEFILES\23EF1D6AD5337B34377246C297C8C041\HTTPLIB-POPULATE-MKDIR.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -Dcfgdir=/Debug -P C:/Users/awesk/Desktop/Elpis/build/_deps/httplib-subbuild/httplib-populate-prefix/tmp/httplib-populate-mkdirs.cmake
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Users/awesk/Desktop/Elpis/build/_deps/httplib-subbuild/httplib-populate-prefix/src/httplib-populate-stamp/Debug/httplib-populate-mkdir
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\AWESK\DESKTOP\ELPIS\BUILD\_DEPS\HTTPLIB-SUBBUILD\CMAKEFILES\23EF1D6AD5337B34377246C297C8C041\HTTPLIB-POPULATE-DOWNLOAD.RULE
+setlocal
+cd C:\Users\awesk\Desktop\Elpis\build\_deps
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE -P C:/Users/awesk/Desktop/Elpis/build/_deps/httplib-subbuild/httplib-populate-prefix/tmp/httplib-populate-gitclone.cmake
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Users/awesk/Desktop/Elpis/build/_deps/httplib-subbuild/httplib-populate-prefix/src/httplib-populate-stamp/Debug/httplib-populate-download
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\AWESK\DESKTOP\ELPIS\BUILD\_DEPS\HTTPLIB-SUBBUILD\CMAKEFILES\23EF1D6AD5337B34377246C297C8C041\HTTPLIB-POPULATE-UPDATE.RULE
+setlocal
+cd C:\Users\awesk\Desktop\Elpis\build\_deps\httplib-src
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -Dcan_fetch=YES -DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE -P C:/Users/awesk/Desktop/Elpis/build/_deps/httplib-subbuild/httplib-populate-prefix/tmp/httplib-populate-gitupdate.cmake
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\AWESK\DESKTOP\ELPIS\BUILD\_DEPS\HTTPLIB-SUBBUILD\CMAKEFILES\23EF1D6AD5337B34377246C297C8C041\HTTPLIB-POPULATE-PATCH.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -E echo_append
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Users/awesk/Desktop/Elpis/build/_deps/httplib-subbuild/httplib-populate-prefix/src/httplib-populate-stamp/Debug/httplib-populate-patch
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\AWESK\DESKTOP\ELPIS\BUILD\_DEPS\HTTPLIB-SUBBUILD\CMAKEFILES\23EF1D6AD5337B34377246C297C8C041\HTTPLIB-POPULATE-CONFIGURE.RULE
+setlocal
+cd C:\Users\awesk\Desktop\Elpis\build\_deps\httplib-build
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E echo_append
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Users/awesk/Desktop/Elpis/build/_deps/httplib-subbuild/httplib-populate-prefix/src/httplib-populate-stamp/Debug/httplib-populate-configure
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\AWESK\DESKTOP\ELPIS\BUILD\_DEPS\HTTPLIB-SUBBUILD\CMAKEFILES\23EF1D6AD5337B34377246C297C8C041\HTTPLIB-POPULATE-BUILD.RULE
+setlocal
+cd C:\Users\awesk\Desktop\Elpis\build\_deps\httplib-build
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E echo_append
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Users/awesk/Desktop/Elpis/build/_deps/httplib-subbuild/httplib-populate-prefix/src/httplib-populate-stamp/Debug/httplib-populate-build
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\AWESK\DESKTOP\ELPIS\BUILD\_DEPS\HTTPLIB-SUBBUILD\CMAKEFILES\23EF1D6AD5337B34377246C297C8C041\HTTPLIB-POPULATE-INSTALL.RULE
+setlocal
+cd C:\Users\awesk\Desktop\Elpis\build\_deps\httplib-build
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E echo_append
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Users/awesk/Desktop/Elpis/build/_deps/httplib-subbuild/httplib-populate-prefix/src/httplib-populate-stamp/Debug/httplib-populate-install
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\AWESK\DESKTOP\ELPIS\BUILD\_DEPS\HTTPLIB-SUBBUILD\CMAKEFILES\23EF1D6AD5337B34377246C297C8C041\HTTPLIB-POPULATE-TEST.RULE
+setlocal
+cd C:\Users\awesk\Desktop\Elpis\build\_deps\httplib-build
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E echo_append
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Users/awesk/Desktop/Elpis/build/_deps/httplib-subbuild/httplib-populate-prefix/src/httplib-populate-stamp/Debug/httplib-populate-test
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\AWESK\DESKTOP\ELPIS\BUILD\_DEPS\HTTPLIB-SUBBUILD\CMAKEFILES\18AE20A3E4E53F2CB1FA974AC3558943\HTTPLIB-POPULATE-COMPLETE.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -E make_directory C:/Users/awesk/Desktop/Elpis/build/_deps/httplib-subbuild/CMakeFiles/Debug
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Users/awesk/Desktop/Elpis/build/_deps/httplib-subbuild/CMakeFiles/Debug/httplib-populate-complete
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Users/awesk/Desktop/Elpis/build/_deps/httplib-subbuild/httplib-populate-prefix/src/httplib-populate-stamp/Debug/httplib-populate-done
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\AWESK\DESKTOP\ELPIS\BUILD\_DEPS\HTTPLIB-SUBBUILD\CMAKEFILES\C9ACC038845A339DB345C5622F05FE79\HTTPLIB-POPULATE.RULE
+setlocal
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\AWESK\DESKTOP\ELPIS\BUILD\_DEPS\HTTPLIB-SUBBUILD\CMAKELISTS.TXT
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/awesk/Desktop/Elpis/build/_deps/httplib-subbuild -BC:/Users/awesk/Desktop/Elpis/build/_deps/httplib-subbuild --check-stamp-file C:/Users/awesk/Desktop/Elpis/build/_deps/httplib-subbuild/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

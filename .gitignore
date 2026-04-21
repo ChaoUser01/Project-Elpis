@@ -1,0 +1,37 @@
+# Build
+build/
+cmake-build-*/
+out/
+*.exe
+*.pdb
+*.lib
+*.obj
+*.o
+
+# IDE
+.vs/
+.vscode/
+.idea/
+*.sln
+*.slnx
+*.vcxproj*
+*.user
+
+# Dependencies (fetched by CMake)
+_deps/
+
+# Runtime data
+outputs/
+assets/
+ledger.json
+
+# Environment
+.env
+
+# OS
+Thumbs.db
+.DS_Store
+desktop.ini
+
+# Generated PDFs
+*.pdf

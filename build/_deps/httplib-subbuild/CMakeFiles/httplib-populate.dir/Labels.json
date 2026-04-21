@@ -1,0 +1,46 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "C:/Users/awesk/Desktop/Elpis/build/_deps/httplib-subbuild/CMakeFiles/httplib-populate"
+		},
+		{
+			"file" : "C:/Users/awesk/Desktop/Elpis/build/_deps/httplib-subbuild/CMakeFiles/c9acc038845a339db345c5622f05fe79/httplib-populate.rule"
+		},
+		{
+			"file" : "C:/Users/awesk/Desktop/Elpis/build/_deps/httplib-subbuild/CMakeFiles/18ae20a3e4e53f2cb1fa974ac3558943/httplib-populate-complete.rule"
+		},
+		{
+			"file" : "C:/Users/awesk/Desktop/Elpis/build/_deps/httplib-subbuild/CMakeFiles/23ef1d6ad5337b34377246c297c8c041/httplib-populate-build.rule"
+		},
+		{
+			"file" : "C:/Users/awesk/Desktop/Elpis/build/_deps/httplib-subbuild/CMakeFiles/23ef1d6ad5337b34377246c297c8c041/httplib-populate-configure.rule"
+		},
+		{
+			"file" : "C:/Users/awesk/Desktop/Elpis/build/_deps/httplib-subbuild/CMakeFiles/23ef1d6ad5337b34377246c297c8c041/httplib-populate-download.rule"
+		},
+		{
+			"file" : "C:/Users/awesk/Desktop/Elpis/build/_deps/httplib-subbuild/CMakeFiles/23ef1d6ad5337b34377246c297c8c041/httplib-populate-install.rule"
+		},
+		{
+			"file" : "C:/Users/awesk/Desktop/Elpis/build/_deps/httplib-subbuild/CMakeFiles/23ef1d6ad5337b34377246c297c8c041/httplib-populate-mkdir.rule"
+		},
+		{
+			"file" : "C:/Users/awesk/Desktop/Elpis/build/_deps/httplib-subbuild/CMakeFiles/23ef1d6ad5337b34377246c297c8c041/httplib-populate-patch.rule"
+		},
+		{
+			"file" : "C:/Users/awesk/Desktop/Elpis/build/_deps/httplib-subbuild/CMakeFiles/23ef1d6ad5337b34377246c297c8c041/httplib-populate-test.rule"
+		},
+		{
+			"file" : "C:/Users/awesk/Desktop/Elpis/build/_deps/httplib-subbuild/CMakeFiles/23ef1d6ad5337b34377246c297c8c041/httplib-populate-update.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"httplib-populate"
+		],
+		"name" : "httplib-populate"
+	}
+}

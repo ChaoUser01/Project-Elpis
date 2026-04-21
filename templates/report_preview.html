@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title }} — Preview</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', Georgia, serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            color: #1a1a1a;
+            line-height: 1.8;
+        }
+        h1 { text-align: center; font-size: 1.8rem; margin-bottom: 0.5rem; }
+        h2 { font-size: 1.3rem; margin-top: 2rem; border-bottom: 1px solid #ccc; padding-bottom: 4px; }
+        .abstract { font-style: italic; margin: 20px 40px; }
+        pre {
+            background: #f4f4f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 16px;
+            overflow-x: auto;
+            font-size: 0.85rem;
+        }
+        .meta { text-align: center; color: #666; margin-bottom: 30px; }
+        .references li { font-size: 0.9rem; margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <h1>{{ title }}</h1>
+    {% if subtitle %}<p style="text-align:center;color:#666;">{{ subtitle }}</p>{% endif %}
+    <p class="meta">{{ author }} &mdash; {{ institution }} &mdash; {{ date }}</p>
+
+    {% if abstract %}
+    <h2>Abstract</h2>
+    <div class="abstract">{{ abstract }}</div>
+    {% endif %}
+
+    {% for section in sections %}
+    <h2>{{ section.heading }}</h2>
+    <p>{{ section.body }}</p>
+    {% endfor %}
+
+    {% if references %}
+    <h2>References</h2>
+    <ol class="references">
+    {% for ref in references %}
+        <li>{{ ref.text }}</li>
+    {% endfor %}
+    </ol>
+    {% endif %}
+</body>
+</html>

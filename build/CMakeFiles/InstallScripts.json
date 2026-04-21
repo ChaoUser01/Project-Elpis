@@ -1,0 +1,9 @@
+{
+	"InstallScripts" : 
+	[
+		"C:/Users/awesk/Desktop/Elpis/build/cmake_install.cmake",
+		"C:/Users/awesk/Desktop/Elpis/build/_deps/httplib-build/cmake_install.cmake",
+		"C:/Users/awesk/Desktop/Elpis/build/_deps/json-build/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

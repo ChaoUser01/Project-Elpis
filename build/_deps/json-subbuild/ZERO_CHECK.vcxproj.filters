@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="18.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\awesk\Desktop\Elpis\build\_deps\json-subbuild\CMakeFiles\665272818fb31ea5c32fd28eaec9518f\generate.stamp.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{0888D64E-A05F-3DBE-AAEA-B213D4D940F3}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

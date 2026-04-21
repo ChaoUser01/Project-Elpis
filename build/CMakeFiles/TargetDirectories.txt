@@ -1,0 +1,8 @@
+C:/Users/awesk/Desktop/Elpis/build/CMakeFiles/Elpis.dir
+C:/Users/awesk/Desktop/Elpis/build/CMakeFiles/INSTALL.dir
+C:/Users/awesk/Desktop/Elpis/build/CMakeFiles/ALL_BUILD.dir
+C:/Users/awesk/Desktop/Elpis/build/CMakeFiles/ZERO_CHECK.dir
+C:/Users/awesk/Desktop/Elpis/build/_deps/httplib-build/CMakeFiles/INSTALL.dir
+C:/Users/awesk/Desktop/Elpis/build/_deps/httplib-build/CMakeFiles/ALL_BUILD.dir
+C:/Users/awesk/Desktop/Elpis/build/_deps/json-build/CMakeFiles/INSTALL.dir
+C:/Users/awesk/Desktop/Elpis/build/_deps/json-build/CMakeFiles/ALL_BUILD.dir
