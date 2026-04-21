@@ -15,7 +15,7 @@ Agent::Agent() {
     // No longer auto-load from env — keys come from BYOK login
 }
 
-// ── Provider auto-detection from API key ──────────────────────────────────
+// Provider resolution logic
 
 void Agent::resolveEndpoint(std::string& outUrl, std::string& outModel) {
     // If explicit overrides are set, use them
@@ -27,12 +27,13 @@ void Agent::resolveEndpoint(std::string& outUrl, std::string& outModel) {
 
     // Auto-detect provider from API key prefix
     std::string provider = provider_;
-    if (provider.empty()) {
-        if (apiKey_.substr(0, 4) == "gsk_") {
+    if (provider.empty() && !apiKey_.empty()) {
+        std::string key = utils::trim(apiKey_);
+        if (key.size() >= 4 && key.substr(0, 4) == "gsk_") {
             provider = "groq";
-        } else if (apiKey_.substr(0, 4) == "AIza") {
+        } else if (key.size() >= 4 && key.substr(0, 4) == "AIza") {
             provider = "gemini";
-        } else if (apiKey_.substr(0, 3) == "sk-") {
+        } else if (key.size() >= 3 && key.substr(0, 3) == "sk-") {
             provider = "openai";
         } else {
             // Fallback: check env vars
@@ -52,7 +53,7 @@ void Agent::resolveEndpoint(std::string& outUrl, std::string& outModel) {
         outModel = model_.empty() ? "llama-3.3-70b-versatile" : model_;
     } else if (provider == "gemini") {
         outUrl   = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
-        outModel = model_.empty() ? "gemini-2.5-flash" : model_;
+        outModel = model_.empty() ? "gemini-1.5-flash" : model_;
     } else {
         outUrl   = "https://api.openai.com/v1/chat/completions";
         outModel = model_.empty() ? "gpt-4o" : model_;
@@ -60,7 +61,7 @@ void Agent::resolveEndpoint(std::string& outUrl, std::string& outModel) {
 }
 
 
-// ── Discipline detection ───────────────────────────────────────────────────
+// Detect research discipline from prompt keywords
 
 std::string Agent::detectDiscipline(const std::string& prompt) {
     std::string lower = utils::toLower(prompt);
@@ -121,29 +122,41 @@ std::string Agent::detectDiscipline(const std::string& prompt) {
 ReportContent Agent::generateWithLLM(const std::string& prompt) {
     HttpClient client;
 
-    json systemMsg = {
+     json systemMsg = {
         {"role", "system"},
         {"content",
-         "You are an expert academic writer. Generate a formal university-level report "
-         "based on the user's prompt. Return ONLY valid JSON with this structure:\n"
+         "You are an elite academic professor and researcher. Generate a definitive, university-level report "
+         "based on the user's prompt. Your output must be academically rigorous, use formal terminology, "
+         "and include detailed analysis. Return ONLY valid JSON with this structure:\n"
          "{\n"
          "  \"title\": \"...\",\n"
          "  \"subtitle\": \"...\",\n"
-         "  \"abstract\": \"150-250 word formal abstract\",\n"
+         "  \"abstract\": \"200-300 word formal abstract covering objectives, methodology, and findings\",\n"
          "  \"discipline\": \"...\",\n"
          "  \"sections\": [\n"
          "    {\n"
-         "      \"heading\": \"1. Introduction\",\n"
-         "      \"body\": \"formal academic prose...\",\n"
-         "      \"code\": [{\"language\": \"python\", \"code\": \"...\"}],\n"
-         "      \"charts\": [{\"type\": \"bar\", \"title\": \"...\", "
-         "\"labels\": [...], \"values\": [...]}]\n"
+         "      \"heading\": \"1. Introduction (or other heading)\",\n"
+         "      \"body\": \"Detailed academic prose with citations...\",\n"
+         "      \"assets\": [{\"filename\": \"analysis.py\", \"language\": \"python\", \"code\": \"...\"}],\n"
+         "      \"charts\": [{\"type\": \"bar\", \"title\": \"Performance Comparison\", "
+         "\"labels\": [\"A\", \"B\"], \"values\": [0.85, 0.92]}]\n"
          "    }\n"
          "  ],\n"
-         "  \"references\": [\"[1] Author, Title, Journal, Year.\", ...]\n"
+         "  \"references\": [\"[1] Author, A. (Year). Title. Journal, Vol(No).\", ...]\n"
          "}\n"
-         "Use elevated academic tone. Include 5-8 sections. Add code only if relevant. "
-         "Add 1-2 chart directives if data visualization would support the text."}
+         "CRITICAL REQUIREMENTS:\n"
+         "1. Use elevated academic tone (no conversational filler).\n"
+         "2. Include 6-8 comprehensive sections.\n"
+         "   - One section MUST be dedicated to 'Implementation and Setup Guide' if code assets are provided.\n"
+         "3. For technical topics, include 2-4 significant 'assets' (source code files) in relevant sections.\n"
+         "   - If the logic is compact (< 300 lines), use a single well-structured file.\n"
+         "   - If the logic is complex or modular, use multiple separate files (e.g. main, utils, model).\n"
+         "   - MANDATORY: If code is provided, include an asset named 'README.md' or 'SETUP.txt' with clear execution instructions.\n"
+         "   - Provide semantic, production-ready filenames.\n"
+         "   - Ensure code is self-contained, error-free, and specifies any environment requirements.\n"
+         "   - NEVER include code related to the Elpis report generator engine itself. Only provide code for the research topic.\n"
+         "4. Graphs MUST use realistic numerical data, not placeholders.\n"
+         "5. Citations MUST be formatted in APA/IEEE style."}
     };
 
     json userMsg = {{"role", "user"}, {"content", prompt}};
@@ -152,6 +165,9 @@ ReportContent Agent::generateWithLLM(const std::string& prompt) {
     std::string resolvedUrl, resolvedModel;
     resolveEndpoint(resolvedUrl, resolvedModel);
 
+    // Trim API key (crucial for Windows .env files which may have \r)
+    std::string cleanKey = utils::trim(apiKey_);
+
     std::cout << "[Agent] LLM endpoint: " << resolvedUrl << std::endl;
     std::cout << "[Agent] LLM model: " << resolvedModel << std::endl;
 
@@ -159,16 +175,21 @@ ReportContent Agent::generateWithLLM(const std::string& prompt) {
         {"model", resolvedModel},
         {"messages", json::array({systemMsg, userMsg})},
         {"temperature", 0.7},
-        {"max_tokens", 4096},
-        {"response_format", {{"type", "json_object"}}}
+        {"max_tokens", 4096}
     };
+
+    // Groq often throws 403 Forbidden if response_format is requested but not supported
+    // for that specific model/version. We rely on system instructions instead.
+    if (resolvedUrl.find("groq.com") == std::string::npos) {
+        reqBody["response_format"] = {{"type", "json_object"}};
+    }
 
     auto resp = client.post(
         resolvedUrl,
         reqBody.dump(),
         {
             {"Content-Type", "application/json"},
-            {"Authorization", "Bearer " + apiKey_}
+            {"Authorization", "Bearer " + cleanKey}
         }
     );
 
@@ -184,14 +205,21 @@ ReportContent Agent::generateWithLLM(const std::string& prompt) {
     try {
         auto j = json::parse(resp.body);
         auto text = j["choices"][0]["message"]["content"].get<std::string>();
-        auto data = json::parse(text);
+        
+        // Use extractJson to handle Markdown backticks or preamble
+        std::string cleanedJson = utils::extractJson(text);
+        auto data = json::parse(cleanedJson);
 
         content.title      = data.value("title", "Untitled Report");
         content.subtitle   = data.value("subtitle", "");
         content.abstractText = data.value("abstract", "");
         content.discipline = data.value("discipline", detectDiscipline(prompt));
-        content.author     = "Elpis";
-        content.institution = "University";
+        
+        // Preserve author if already set (e.g. by server from session)
+        if (content.author.empty()) {
+            content.author = data.value("author", "Elpis Engine");
+        }
+        content.institution = data.value("institution", "Academic Institution");
 
         // Date
         auto now = std::chrono::system_clock::now();
@@ -209,9 +237,10 @@ ReportContent Agent::generateWithLLM(const std::string& prompt) {
                 s.heading = sec.value("heading", "Section");
                 s.body    = sec.value("body", "");
 
-                if (sec.contains("code")) {
-                    for (auto& cb : sec["code"]) {
+                if (sec.contains("assets")) {
+                    for (auto& cb : sec["assets"]) {
                         CodeBlock block;
+                        block.filename = cb.value("filename", "script.py");
                         block.language = cb.value("language", "text");
                         block.code     = cb.value("code", "");
                         if (!block.code.empty()) s.codeBlocks.push_back(block);
@@ -240,14 +269,19 @@ ReportContent Agent::generateWithLLM(const std::string& prompt) {
             content.references = data["references"].get<std::vector<std::string>>();
         }
 
+    } catch (const std::exception& e) {
+        std::cerr << "[Agent] Error processing LLM response: " << e.what() << std::endl;
+        std::cerr << "[Agent] Raw response starting with: " << resp.body.substr(0, 200) << std::endl;
+        return generateDemo(prompt);
     } catch (...) {
+        std::cerr << "[Agent] Unknown error processing LLM response" << std::endl;
         return generateDemo(prompt);
     }
 
     return content;
 }
 
-// ── Demo content generation ────────────────────────────────────────────────
+// Return demo content based on prompt keywords and discipline
 
 ReportContent Agent::generateDemo(const std::string& prompt) {
     ReportContent c;
@@ -507,7 +541,7 @@ ReportContent Agent::generateDemo(const std::string& prompt) {
     return c;
 }
 
-// ── Main entry point ───────────────────────────────────────────────────────
+// Pipeline entry point
 
 ReportContent Agent::generate(const std::string& prompt) {
     if (hasApiKey()) {

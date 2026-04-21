@@ -7,10 +7,7 @@
 #include <iomanip>
 #include <cstring>
 
-// ════════════════════════════════════════════════════════════════════════════
-// PdfWriter — Custom PDF 1.4 generator
-// Supports: standard 14 fonts, text wrapping, images, drawing primitives
-// ════════════════════════════════════════════════════════════════════════════
+// PdfWriter - Custom PDF 1.4 generator
 
 PdfWriter::PdfWriter(float pageW_mm, float pageH_mm)
     : pageW_(pageW_mm), pageH_(pageH_mm),
@@ -19,7 +16,7 @@ PdfWriter::PdfWriter(float pageW_mm, float pageH_mm)
     initFontMetrics();
 }
 
-// ── Font metrics (Adobe AFM data for standard 14 fonts) ────────────────────
+// Font metrics (Adobe AFM data)
 // Values are character widths in 1/1000 of a text space unit.
 // For brevity we store the most common Latin-1 subset; unmapped chars get
 // a default width.
@@ -156,7 +153,7 @@ void PdfWriter::initFontMetrics() {
     fontMetrics_["ZapfDingbats"].resize(256, 500);
 }
 
-// ── Character / string width ───────────────────────────────────────────────
+// Measurement logic
 
 float PdfWriter::charWidth(unsigned char c, const std::string& font, float sizePt) const {
     auto it = fontMetrics_.find(font);
@@ -193,7 +190,7 @@ float PdfWriter::lineHeight(float spacing) const {
     return (fontSize_ * spacing) / 2.83465f;  // pt → mm
 }
 
-// ── Page management ────────────────────────────────────────────────────────
+// Page handling
 
 void PdfWriter::newPage() {
     pages_.emplace_back();
@@ -208,7 +205,7 @@ PdfWriter::Page& PdfWriter::currentPage() {
     return pages_.back();
 }
 
-// ── Text ───────────────────────────────────────────────────────────────────
+// Text commands
 
 void PdfWriter::setFont(const std::string& name, float sizePt) {
     fontName_ = name;
@@ -324,7 +321,7 @@ float PdfWriter::drawWrappedText(float x_mm, float y_mm, float maxWidth_mm,
     return curY;
 }
 
-// ── Drawing primitives ─────────────────────────────────────────────────────
+// Shapes
 
 void PdfWriter::drawLine(float x1, float y1, float x2, float y2, float width) {
     auto& s = currentPage().contentStream;
@@ -349,7 +346,7 @@ void PdfWriter::drawRect(float x, float y, float w, float h, bool fill, float li
     s << (fill ? "B" : "S") << "\n";
 }
 
-// ── Image embedding ────────────────────────────────────────────────────────
+// Images
 
 void PdfWriter::embedJpeg(float x_mm, float y_mm, float w_mm, float h_mm,
                            const std::vector<uint8_t>& jpegData,
@@ -381,7 +378,7 @@ void PdfWriter::embedJpeg(float x_mm, float y_mm, float w_mm, float h_mm,
     imageData_[imgObjId] = { jpegData, imgWidth, imgHeight };
 }
 
-// ── PDF Building ───────────────────────────────────────────────────────────
+// PDF encoding logic
 
 std::string PdfWriter::buildFontResources(int pageIdx) {
     std::ostringstream fs;
@@ -542,7 +539,7 @@ std::string PdfWriter::buildPdf() {
         }
     }
 
-    // ── Assemble final PDF ─────────────────────────────────────────────────
+    // Assemble stream
     std::ostringstream pdf;
     pdf << "%PDF-1.4\n";
     // Binary comment to mark as binary file
@@ -586,7 +583,7 @@ std::string PdfWriter::buildPdf() {
     return pdf.str();
 }
 
-// ── Output ─────────────────────────────────────────────────────────────────
+// Saving
 
 void PdfWriter::save(const std::string& filename) {
     std::string data = buildPdf();

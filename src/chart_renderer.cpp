@@ -9,7 +9,7 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-// ── Palette ────────────────────────────────────────────────────────────────
+// Color palette for charts
 
 ChartRenderer::Color ChartRenderer::getPaletteColor(int index) {
     static const Color palette[] = {
@@ -25,7 +25,7 @@ ChartRenderer::Color ChartRenderer::getPaletteColor(int index) {
     return palette[index % 8];
 }
 
-// ── Bar chart ──────────────────────────────────────────────────────────────
+// Bar chart rendering
 
 float ChartRenderer::drawBarChart(PdfWriter& pdf, const ChartData& chart,
                                    float x, float y, float w, float h,
@@ -100,7 +100,7 @@ float ChartRenderer::drawBarChart(PdfWriter& pdf, const ChartData& chart,
     return y + h + 3;
 }
 
-// ── Line chart ─────────────────────────────────────────────────────────────
+// Line chart rendering
 
 float ChartRenderer::drawLineChart(PdfWriter& pdf, const ChartData& chart,
                                     float x, float y, float w, float h,
@@ -165,7 +165,7 @@ float ChartRenderer::drawLineChart(PdfWriter& pdf, const ChartData& chart,
     return y + h + 3;
 }
 
-// ── Pie chart ──────────────────────────────────────────────────────────────
+// Pie chart rendering
 
 float ChartRenderer::drawPieChart(PdfWriter& pdf, const ChartData& chart,
                                    float x, float y, float w, float h,
@@ -211,7 +211,7 @@ float ChartRenderer::drawPieChart(PdfWriter& pdf, const ChartData& chart,
     return std::max(y + h, ly) + 3;
 }
 
-// ── Table ──────────────────────────────────────────────────────────────────
+// Table rendering
 
 float ChartRenderer::drawTable(PdfWriter& pdf, const ChartData& chart,
                                 float x, float y, float w,
@@ -273,7 +273,7 @@ float ChartRenderer::drawTable(PdfWriter& pdf, const ChartData& chart,
     return curY + 3;
 }
 
-// ── Dispatcher ─────────────────────────────────────────────────────────────
+// Dispatcher
 
 float ChartRenderer::drawChart(PdfWriter& pdf, const ChartData& chart,
                                 float x, float y, float w, float h,

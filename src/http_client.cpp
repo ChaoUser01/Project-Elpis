@@ -8,7 +8,7 @@
 
 #pragma comment(lib, "winhttp.lib")
 
-// ── Helpers ────────────────────────────────────────────────────────────────
+// Helpers
 
 static std::wstring toWide(const std::string& s) {
     if (s.empty()) return {};
@@ -47,7 +47,7 @@ static UrlParts parseUrl(const std::string& url) {
     return p;
 }
 
-// ── Implementation ─────────────────────────────────────────────────────────
+// Implementation
 
 HttpClient::Response HttpClient::post(const std::string& url,
                                        const std::string& body,

@@ -352,25 +352,25 @@
                         // Show result
                         resultTitle.textContent = data.reportTitle || 'Academic Report';
                         resultTime.textContent = elapsed + ' s';
+                        
+                        // PDF preview
+                        if (data.pdfUrl) {
+                            pdfViewer.innerHTML = `<iframe src="${data.pdfUrl}#toolbar=0" width="100%" height="800px" style="border:none; border-radius:8px;"></iframe>`;
+                            downloadPdf.href = data.pdfUrl;
+                            
+                            // Extract filename for download
+                            const parts = data.pdfUrl.split('/');
+                            const filename = parts[parts.length - 1] || 'report.pdf';
+                            downloadBtn.download = filename;
+                            downloadBtn.href = data.pdfUrl;
+                        }
+
                         resultSession.textContent = sessionId.substring(0, 12) + '...';
-                        
-                        downloadBtn.href = data.pdfUrl;
-                        
-                        // Extract filename
-                        const parts = data.pdfUrl.split('/');
-                        const filename = parts[parts.length - 1] || 'report.pdf';
-                        downloadBtn.download = filename;
-                        
                         resultCard.style.display = 'block';
                         showToast('Report generated successfully!', 'success');
 
-                        // Auto-trigger download
-                        const link = document.createElement('a');
-                        link.href = data.pdfUrl;
-                        link.download = filename;
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
+                        // NEW: Fetch and render assets
+                        fetchAssets(sessionId);
 
                         generateBtn.classList.remove('loading');
                         generateBtn.disabled = false;
@@ -379,6 +379,49 @@
                     console.error('Failed to parse SSE event', e);
                 }
             };
+
+            async function fetchAssets(sid) {
+                try {
+                    const res = await fetch(`/api/assets?session_id=${sid}`);
+                    const assets = await res.json();
+
+                    const assetsCard = document.getElementById('assetsCard');
+                    const assetsList = document.getElementById('assetsList');
+                    
+                    if (assets && assets.length > 0) {
+                        assetsCard.style.display = 'block';
+                        assetsList.innerHTML = '';
+                        
+                        assets.forEach(filename => {
+                            const ext = filename.split('.').pop().toLowerCase();
+                            let icon = 'fa-file-code';
+                            let lang = 'CODE';
+                            
+                            if (ext === 'py') { icon = 'fa-brands fa-python'; lang = 'Python'; }
+                            else if (ext === 'js') { icon = 'fa-brands fa-js'; lang = 'JavaScript'; }
+                            else if (ext === 'cpp' || ext === 'h') { icon = 'fa-file-code'; lang = 'C++'; }
+                            else if (ext === 'html') { icon = 'fa-brands fa-html5'; lang = 'HTML'; }
+                            else if (ext === 'css') { icon = 'fa-brands fa-css3-alt'; lang = 'CSS'; }
+
+                            const card = document.createElement('div');
+                            card.className = 'asset-card';
+                            card.innerHTML = `
+                                <div class="asset-icon"><i class="fas ${icon}"></i></div>
+                                <div class="asset-name">${filename}</div>
+                                <div class="asset-lang">${lang}</div>
+                                <a href="/api/download?session_id=${sid}&file=${filename}" class="btn-asset">
+                                    <i class="fas fa-download"></i> Download
+                                </a>
+                            `;
+                            assetsList.appendChild(card);
+                        });
+                    } else {
+                        assetsCard.style.display = 'none';
+                    }
+                } catch (e) {
+                    console.error('Failed to fetch assets', e);
+                }
+            }
             
             es.onerror = (err) => {
                 es.close();

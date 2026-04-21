@@ -3,7 +3,7 @@
 #include "style_profile.h"
 #include <string>
 
-// ── PDF Report Composer ────────────────────────────────────────────────────
+// PDF Report Composer
 // Uses PdfWriter + ChartRenderer to compose a full academic PDF.
 
 class PdfEngine {

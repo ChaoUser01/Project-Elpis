@@ -29,10 +29,10 @@ void Server::start() {
     std::string outputDir  = baseDir_ + "/outputs";
     utils::ensureDir(outputDir);
 
-    // ── Serve static files ─────────────────────────────────────────────────
+    // Serve static files
     svr.set_mount_point("/static", staticDir);
 
-    // ── Root → index.html ──────────────────────────────────────────────────
+    // Root → index.html
     svr.Get("/", [&](const httplib::Request& /*req*/, httplib::Response& res) {
         std::string indexPath = staticDir + "/index.html";
         std::string content = utils::readFile(indexPath);
@@ -44,7 +44,7 @@ void Server::start() {
         res.set_content(content, "text/html");
     });
 
-    // ── Health check ───────────────────────────────────────────────────────
+    // Health check
     svr.Get("/api/health", [&](const httplib::Request& /*req*/, httplib::Response& res) {
         json j = {
             {"status", "ok"},
@@ -54,7 +54,7 @@ void Server::start() {
         res.set_content(j.dump(), "application/json");
     });
 
-    // ── Get student list (for UI dropdown) ─────────────────────────────────
+    // Get student list
     svr.Get("/api/students", [&](const httplib::Request& /*req*/, httplib::Response& res) {
         auto list = ledger_.getStudentList();
         json arr = json::array();
@@ -70,7 +70,7 @@ void Server::start() {
         res.set_content(arr.dump(), "application/json");
     });
 
-    // ── Claim account ──────────────────────────────────────────────────────
+    // Claim account
     svr.Post("/api/claim", [&](const httplib::Request& req, httplib::Response& res) {
         json body;
         try { body = json::parse(req.body); } catch (...) {
@@ -92,7 +92,7 @@ void Server::start() {
         res.set_content(json({{"success", true}, {"message", "Account claimed successfully. You may now log in."}}).dump(), "application/json");
     });
 
-    // ── Login with BYOK ────────────────────────────────────────────────────
+    // Login with BYOK
     svr.Post("/api/login", [&](const httplib::Request& req, httplib::Response& res) {
         json body;
         try { body = json::parse(req.body); } catch (...) {
@@ -122,7 +122,7 @@ void Server::start() {
         }).dump(), "application/json");
     });
 
-    // ── Logout ─────────────────────────────────────────────────────────────
+    // Logout
     svr.Post("/api/logout", [&](const httplib::Request& req, httplib::Response& res) {
         std::string auth = req.get_header_value("Authorization");
         if (auth.substr(0, 7) == "Bearer ") {
@@ -131,7 +131,7 @@ void Server::start() {
         res.set_content(json({{"success", true}}).dump(), "application/json");
     });
 
-    // ── Current user info ──────────────────────────────────────────────────
+    // Current user info
     svr.Get("/api/me", [&](const httplib::Request& req, httplib::Response& res) {
         std::string auth = req.get_header_value("Authorization");
         if (auth.size() <= 7 || auth.substr(0, 7) != "Bearer ") {
@@ -154,7 +154,7 @@ void Server::start() {
         }).dump(), "application/json");
     });
 
-    // ── Generate report (auth-aware) ───────────────────────────────────────
+    // Generate report
     svr.Post("/generate", [&](const httplib::Request& req, httplib::Response& res) {
         auto start = std::chrono::steady_clock::now();
 
@@ -280,6 +280,34 @@ void Server::start() {
             PdfEngine engine;
             std::string pdfPath = engine.generateReport(content, style, outputDir);
 
+            // ── Step 5: Extract Assets (Code files)
+            updateStatus("Extracting source code assets...");
+            
+            auto ensureExt = [](const std::string& fname, const std::string& lang) {
+                if (fname.find('.') != std::string::npos) return fname;
+                std::string l = utils::toLower(lang);
+                if (l == "python" || l == "py") return fname + ".py";
+                if (l == "cpp" || l == "c++" || l == "cplusplus") return fname + ".cpp";
+                if (l == "js" || l == "javascript") return fname + ".js";
+                if (l == "html") return fname + ".html";
+                if (l == "css") return fname + ".css";
+                if (l == "java") return fname + ".java";
+                if (l == "c") return fname + ".c";
+                return fname + ".txt";
+            };
+
+            std::vector<std::string> savedAssets;
+            for (auto& sec : content.sections) {
+                for (auto& cb : sec.codeBlocks) {
+                    if (!cb.code.empty()) {
+                        std::string safeName = ensureExt(cb.filename, cb.language);
+                        std::string assetPath = outputDir + "/" + safeName;
+                        utils::writeFile(assetPath, cb.code);
+                        savedAssets.push_back(safeName);
+                    }
+                }
+            }
+
             auto elapsed = std::chrono::steady_clock::now() - start;
             auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
             updateStatus("Completed in " + std::to_string(ms) + " ms");
@@ -295,6 +323,7 @@ void Server::start() {
                     s.isComplete = true;
                     s.reportTitle = content.title;
                     s.pdfUrl = "/outputs/" + fs::path(pdfPath).filename().string();
+                    s.assets = savedAssets;
                 }
             }
         }).detach();
@@ -307,7 +336,50 @@ void Server::start() {
         res.set_content(response.dump(), "application/json");
     });
 
-    // ── SSE Stream ─────────────────────────────────────────────────────────
+    // Asset management
+    svr.Get("/api/assets", [&](const httplib::Request& req, httplib::Response& res) {
+        if (!req.has_param("session_id")) {
+            res.status = 400;
+            res.set_content(json({{"error", "Missing session_id"}}).dump(), "application/json");
+            return;
+        }
+        std::string sessionId = req.get_param_value("session_id");
+
+        std::lock_guard<std::mutex> lock(sessionsMutex_);
+        auto it = sessions_.find(sessionId);
+        if (it == sessions_.end()) {
+            res.status = 404;
+            res.set_content(json({{"error", "Session not found"}}).dump(), "application/json");
+            return;
+        }
+
+        json arr = json::array();
+        for (auto& a : it->second.assets) arr.push_back(a);
+        res.set_content(arr.dump(), "application/json");
+    });
+
+    svr.Get("/api/download", [&](const httplib::Request& req, httplib::Response& res) {
+        if (!req.has_param("session_id") || !req.has_param("file")) {
+            res.status = 400;
+            res.set_content("Missing params", "text/plain");
+            return;
+        }
+        std::string sessionId = req.get_param_value("session_id");
+        std::string file      = req.get_param_value("file");
+
+        std::string path = baseDir_ + "/outputs/" + file;
+        if (!utils::fileExists(path)) {
+            res.status = 404;
+            res.set_content("File not found", "text/plain");
+            return;
+        }
+
+        std::string content = utils::readFile(path);
+        res.set_content(content, "application/octet-stream");
+        res.set_header("Content-Disposition", "attachment; filename=\"" + file + "\"");
+    });
+
+    // SSE Stream
     svr.Get("/api/stream", [&](const httplib::Request& req, httplib::Response& res) {
         if (!req.has_param("session_id")) {
             res.status = 400;
@@ -352,10 +424,10 @@ void Server::start() {
     });
 
 
-    // ── Download saved PDFs ────────────────────────────────────────────────
+    // Download saved PDFs
     svr.set_mount_point("/outputs", outputDir);
 
-    // ── Start server ───────────────────────────────────────────────────────
+    // Start server
     std::cout << "\n"
               << "==========================================================\n"
               << " PROJECT ELPIS\n"

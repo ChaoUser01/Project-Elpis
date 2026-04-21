@@ -16,7 +16,7 @@ namespace fs = std::filesystem;
 
 namespace utils {
 
-// ── String ─────────────────────────────────────────────────────────────────
+//String
 
 std::string trim(const std::string& s) {
     auto b = s.find_first_not_of(" \t\r\n");
@@ -59,8 +59,16 @@ std::string join(const std::vector<std::string>& parts, const std::string& delim
     return result;
 }
 
-// ── File I/O ───────────────────────────────────────────────────────────────
+std::string extractJson(const std::string& input) {
+    size_t start = input.find('{');
+    size_t end = input.find_last_of('}');
+    if (start != std::string::npos && end != std::string::npos && end > start) {
+        return input.substr(start, end - start + 1);
+    }
+    return input;
+}
 
+// File I/O
 std::string readFile(const std::string& path) {
     std::ifstream f(path, std::ios::in);
     if (!f.is_open()) return "";
@@ -95,8 +103,7 @@ bool fileExists(const std::string& path) {
     return fs::exists(path);
 }
 
-// ── Directory ──────────────────────────────────────────────────────────────
-
+// Directory utilities
 void ensureDir(const std::string& path) {
     fs::create_directories(path);
 }
@@ -111,8 +118,7 @@ std::string getExecutableDir() {
 #endif
 }
 
-// ── ID generation ──────────────────────────────────────────────────────────
-
+// Session ID generation
 std::string generateSessionId() {
     static std::mt19937 rng(static_cast<unsigned>(
         std::chrono::steady_clock::now().time_since_epoch().count()));
@@ -133,8 +139,7 @@ std::string generateFilename(const std::string& prefix, const std::string& ext) 
     return prefix + "_" + std::to_string(ms) + "." + ext;
 }
 
-// ── Hash ───────────────────────────────────────────────────────────────────
-
+// Simple FNV-1a hash
 uint32_t hashString(const std::string& s) {
     // FNV-1a 32-bit
     uint32_t h = 2166136261u;
@@ -145,8 +150,7 @@ uint32_t hashString(const std::string& s) {
     return h;
 }
 
-// ── PDF helpers ────────────────────────────────────────────────────────────
-
+// PDF utilities
 std::string escPdf(const std::string& s) {
     std::string out;
     out.reserve(s.size() + 16);

@@ -3,7 +3,7 @@
 #include <map>
 #include <vector>
 
-// ── Simple template engine (Jinja2-like syntax) ────────────────────────────
+// Simple template engine (Jinja2-like syntax)
 // Supports:  {{ variable }}
 //            {% for item in list %}...{% endfor %}
 //            {% if variable %}...{% endif %}

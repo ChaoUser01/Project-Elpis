@@ -4,16 +4,17 @@
 #include <mutex>
 #include "user_ledger.h"
 
-// ── Session State Struct ───────────────────────────────────────────────────
+// Session state tracking
 struct SessionState {
     std::string status = "Initializing...";
     bool isComplete = false;
     bool isError = false;
     std::string pdfUrl = "";
     std::string reportTitle = "";
+    std::vector<std::string> assets; // list of asset filenames
 };
 
-// ── HTTP Server ────────────────────────────────────────────────────────────
+// Main HTTP Server class
 // Sets up routes and starts the cpp-httplib server.
 
 class Server {

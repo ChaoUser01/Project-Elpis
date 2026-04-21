@@ -6,7 +6,7 @@
 
 namespace fs = std::filesystem;
 
-// ── Tesseract C API typedefs for dynamic loading ───────────────────────────
+// Tesseract C API for dynamic loading
 
 typedef void* TessBaseAPI;
 typedef void* TessPix;
@@ -24,7 +24,7 @@ typedef void  (*TessDeleteText_t)(char*);
 typedef TessPix (*pixReadMem_t)(const unsigned char*, size_t);
 typedef void    (*pixDestroy_t)(TessPix*);
 
-// ── Implementation ─────────────────────────────────────────────────────────
+// Implementation
 
 OcrEngine::OcrEngine() {
     // Try to load Tesseract DLL dynamically

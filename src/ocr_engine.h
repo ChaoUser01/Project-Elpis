@@ -3,7 +3,7 @@
 #include <vector>
 #include <cstdint>
 
-// ── OCR Engine ─────────────────────────────────────────────────────────────
+// OCR Engine
 // Attempts to extract text from images via:
 //  1. Tesseract C API (dynamically loaded — no build-time dependency)
 //  2. Fallback: returns descriptive error

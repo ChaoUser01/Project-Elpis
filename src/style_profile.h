@@ -3,7 +3,7 @@
 #include <vector>
 #include <cstdint>
 
-// ── Per-session unique academic style ──────────────────────────────────────
+// Academic style profile
 
 struct StyleProfile {
     std::string bodyFont;       // e.g. "Times-Roman"

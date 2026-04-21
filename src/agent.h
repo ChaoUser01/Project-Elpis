@@ -3,9 +3,10 @@
 #include <vector>
 #include "chart_renderer.h"
 
-// ── Content structures produced by the agent ───────────────────────────────
+// Content structures
 
 struct CodeBlock {
+    std::string filename;
     std::string language;
     std::string code;
 };
@@ -29,7 +30,7 @@ struct ReportContent {
     std::string discipline;   // e.g. "Computer Science", "Engineering"
 };
 
-// ── Agent: analyses prompts and generates academic content ─────────────────
+// Agent handles prompt analysis and content generation
 
 class Agent {
 public:

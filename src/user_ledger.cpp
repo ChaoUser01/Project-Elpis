@@ -13,7 +13,7 @@
 
 using json = nlohmann::json;
 
-// ── Crypto Helpers (Windows CryptoAPI) ─────────────────────────────────────
+// Crypto Helpers (Windows BCrypt)
 
 std::string UserLedger::generateSalt() {
     UCHAR saltBytes[16];
@@ -66,7 +66,7 @@ bool UserLedger::verifyPassword(const std::string& passphrase,
     return hashPassword(passphrase, salt) == expectedHash;
 }
 
-// ── Persistence ────────────────────────────────────────────────────────────
+// Persistence
 
 void UserLedger::saveToDisk() {
     if (dataDir_.empty()) return;
@@ -118,7 +118,7 @@ void UserLedger::loadFromDisk() {
     }
 }
 
-// ── Sovereign Ledger Initialization ────────────────────────────────────────
+// Ledger Initialization
 
 UserLedger::UserLedger() {
     struct Entry { const char* id; const char* name; };
@@ -146,7 +146,7 @@ UserLedger::UserLedger() {
               << users_.size() << " students" << std::endl;
 }
 
-// ── Account Claiming ───────────────────────────────────────────────────────
+// Account Claiming
 
 std::string UserLedger::claim(const std::string& studentId, const std::string& passphrase) {
     std::lock_guard<std::mutex> lock(mutex_);
@@ -177,7 +177,7 @@ std::string UserLedger::claim(const std::string& studentId, const std::string& p
     return "";
 }
 
-// ── Login with BYOK ────────────────────────────────────────────────────────
+// Login
 
 std::string UserLedger::login(const std::string& studentId,
                                const std::string& passphrase,
@@ -250,7 +250,7 @@ std::string UserLedger::login(const std::string& studentId,
     return session.token;
 }
 
-// ── Session Validation ─────────────────────────────────────────────────────
+// Session Validation
 
 const AuthSession* UserLedger::validateSession(const std::string& token) {
     std::lock_guard<std::mutex> lock(mutex_);
@@ -269,7 +269,7 @@ const AuthSession* UserLedger::validateSession(const std::string& token) {
     return &it->second;
 }
 
-// ── Logout ─────────────────────────────────────────────────────────────────
+// Logout
 
 void UserLedger::logout(const std::string& token) {
     std::lock_guard<std::mutex> lock(mutex_);
@@ -280,7 +280,7 @@ void UserLedger::logout(const std::string& token) {
     }
 }
 
-// ── Read-only Accessors ────────────────────────────────────────────────────
+// Accessors
 
 const UserRecord* UserLedger::getUser(const std::string& studentId) {
     std::lock_guard<std::mutex> lock(mutex_);

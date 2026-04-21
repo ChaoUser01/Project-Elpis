@@ -5,7 +5,7 @@
 #include <chrono>
 #include <vector>
 
-// ── User record in the Sovereign Ledger ────────────────────────────────────
+// User record in the Sovereign Ledger
 
 struct UserRecord {
     std::string studentId;
@@ -16,7 +16,7 @@ struct UserRecord {
     std::string savedProvider;  // "groq", "gemini", "openai"
 };
 
-// ── Authenticated session ──────────────────────────────────────────────────
+// Authenticated session state
 
 struct AuthSession {
     std::string token;
@@ -27,7 +27,7 @@ struct AuthSession {
     std::chrono::steady_clock::time_point createdAt;
 };
 
-// ── The Sovereign Ledger ───────────────────────────────────────────────────
+// Thread-safe user authentication and session management
 // Thread-safe user authentication and session management.
 // Persists password hashes and API keys to a JSON file on disk.
 

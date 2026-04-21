@@ -5,7 +5,7 @@ StyleProfile generateStyleProfile(const std::string& sessionId) {
     uint32_t h = utils::hashString(sessionId);
     StyleProfile s;
 
-    // ── Font families (5 combos) ───────────────────────────────────────────
+    // Font families
     struct FontSet { const char* body; const char* bold; const char* italic; const char* heading; };
     static const FontSet fonts[] = {
         { "Times-Roman",  "Times-Bold",     "Times-Italic",        "Helvetica-Bold" },
@@ -22,7 +22,7 @@ StyleProfile generateStyleProfile(const std::string& sessionId) {
     s.codeFont      = "Courier";
     s.codeFontBold  = "Courier-Bold";
 
-    // ── Accent colours — muted academic tones ──────────────────────────────
+    // Accent colours
     struct Colour { float r, g, b; };
     static const Colour accents[] = {
         { 0.10f, 0.15f, 0.40f },   // navy
@@ -39,18 +39,18 @@ StyleProfile generateStyleProfile(const std::string& sessionId) {
     s.accentG = accents[ci].g;
     s.accentB = accents[ci].b;
 
-    // ── Heading style ──────────────────────────────────────────────────────
+    // Heading style
     s.headingStyle = static_cast<StyleProfile::HeadingStyle>((h >> 8) % 4);
 
-    // ── Border style ───────────────────────────────────────────────────────
+    // Border style
     s.borderStyle = static_cast<StyleProfile::BorderStyle>((h >> 10) % 4);
     static const float borderWidths[] = { 0.5f, 0.75f, 1.0f, 1.5f };
     s.borderWidth = borderWidths[(h >> 12) % 4];
 
-    // ── Drop cap ───────────────────────────────────────────────────────────
+    // Drop cap
     s.useDropCap = ((h >> 14) % 3) == 0;  // ~33% chance
 
-    // ── Font sizes ─────────────────────────────────────────────────────────
+    // Font sizes
     static const float titleSizes[]   = { 22.0f, 24.0f, 20.0f, 26.0f };
     static const float headingSizes[] = { 14.0f, 15.0f, 13.0f, 16.0f };
     static const float bodySizes[]    = { 11.0f, 11.5f, 12.0f, 10.5f };
@@ -62,7 +62,7 @@ StyleProfile generateStyleProfile(const std::string& sessionId) {
     s.bodyFontSize    = bodySizes[si];
     s.codeFontSize    = codeSizes[si];
 
-    // ── Page number style ──────────────────────────────────────────────────
+    // Page numbering
     s.pageNumStyle = static_cast<StyleProfile::PageNumStyle>((h >> 18) % 3);
 
     return s;

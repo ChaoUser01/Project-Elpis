@@ -7,9 +7,7 @@
 #include <algorithm>
 #include <iomanip>
 
-// ════════════════════════════════════════════════════════════════════════════
-// Compose a full academic report using the custom PDF writer
-// ════════════════════════════════════════════════════════════════════════════
+// Academic report generation using the custom PDF writer
 
 std::string PdfEngine::generateReport(const ReportContent& content,
                                        const StyleProfile& style,
@@ -24,7 +22,7 @@ std::string PdfEngine::generateReport(const ReportContent& content,
     float cw     = pdf.contentWidth();
     float bottom = pdf.contentBottom();
 
-    // ── Cover page ─────────────────────────────────────────────────────────
+    // Cover page
     pdf.newPage();
     float y = 70.0f;
 

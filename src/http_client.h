@@ -2,7 +2,7 @@
 #include <string>
 #include <map>
 
-// ── WinHTTP-based HTTPS client (Windows native, no OpenSSL) ────────────────
+// WinHTTP-based HTTPS client
 
 class HttpClient {
 public:

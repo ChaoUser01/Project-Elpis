@@ -2,7 +2,7 @@
 #include <sstream>
 #include <regex>
 
-// ── Template rendering ─────────────────────────────────────────────────────
+// Template rendering implementation
 
 std::string TemplateEngine::render(const std::string& tmpl,
                                     const VarMap& vars,

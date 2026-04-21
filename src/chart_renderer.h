@@ -4,7 +4,7 @@
 #include <vector>
 #include <map>
 
-// ── Chart types that can be drawn directly into a PDF ──────────────────────
+// Chart types for PDF rendering
 
 struct ChartData {
     enum class Type { Bar, Line, Pie, Table };
