@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    @page { size:A4; margin:17mm; }
+    :root { --slate:#273444; --indigo:#425a8b; --panel:#f3f6fb; --ink:#1f2832; --rule:#d5dce7; }
+    body { margin:0; color:var(--ink); font-family:"Segoe UI", Arial, sans-serif; line-height:1.58; }
+    .banner { background:var(--panel); border-top:8px solid var(--indigo); padding:10mm; }
+    .kicker { font-size:8.5pt; text-transform:uppercase; letter-spacing:.18em; color:var(--indigo); }
+    h1 { margin:3mm 0; font-size:24pt; line-height:1.12; color:var(--slate); }
+    .subtitle { color:#5f7187; font-size:11pt; }
+    .meta { margin-top:5mm; display:flex; flex-wrap:wrap; gap:4mm 8mm; font-size:9.5pt; color:#637388; }
+    .abstract { margin:7mm 0 4mm; padding:5mm 6mm; background:#fff; border:1px solid var(--rule); }
+    h2 { margin:7mm 0 3mm; font-size:13.5pt; color:var(--indigo); }
+    .body { text-align:justify; font-size:10.9pt; }
+    .figure { margin-top:4mm; padding:3mm 4mm; background:var(--panel); border-left:4px solid var(--indigo); color:#556679; font-size:9.5pt; }
+    .references { margin-top:10mm; padding-top:4mm; border-top:1px solid var(--rule); font-size:10pt; }
+    .references ol { padding-left:5mm; }
+  </style>
+</head>
+<body>
+  <header class="banner">
+    <div class="kicker">Analytical Report</div>
+    <h1>{{ title }}</h1>
+    {% if subtitle %}<div class="subtitle">{{ subtitle }}</div>{% endif %}
+    <div class="meta">
+      <span>{{ author }}</span>
+      {% if student_id %}<span>{{ student_id }}</span>{% endif %}
+      <span>{{ discipline }}</span>
+      <span>{{ date }}</span>
+    </div>
+    {% if abstract %}<div class="abstract"><strong>Abstract</strong><div>{{ abstract }}</div></div>{% endif %}
+  </header>
+  {% for section in sections %}
+  <section>
+    <h2>{{ section.heading }}</h2>
+    <div class="body">{{ section.body }}</div>
+    {% for chart in section.charts %}<div class="figure">{{ chart.title }} ({{ chart.type }})</div>{% endfor %}
+  </section>
+  {% endfor %}
+  {% if references %}<section class="references"><strong>References</strong><ol>{% for ref in references %}<li>{{ ref }}</li>{% endfor %}</ol></section>{% endif %}
+</body>
+</html>

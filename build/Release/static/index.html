@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Elpis - AI-powered academic report generation engine built in C++">
+    <meta name="description" content="Elpis — academic report generation">
     <title>Elpis</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=JetBrains+Mono:wght@400;500&family=Source+Sans+3:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
@@ -23,14 +23,14 @@
             <div class="auth-header">
                 <svg viewBox="0 0 40 40" fill="none" width="36" height="36">
                     <rect x="4" y="6" width="24" height="30" rx="2" stroke="currentColor" stroke-width="2"/>
-                    <rect x="12" y="4" width="24" height="30" rx="2" fill="var(--accent)" stroke="currentColor" stroke-width="2"/>
+                    <rect x="12" y="4" width="24" height="30" rx="2" fill="#fafafa" stroke="currentColor" stroke-width="2"/>
                     <line x1="17" y1="12" x2="31" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
                     <line x1="17" y1="17" x2="31" y2="17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
                     <line x1="17" y1="22" x2="27" y2="22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
                 </svg>
                 <div>
-                    <h2>Welcome to Elpis</h2>
-                    <p class="auth-sub">Sovereign Academic Pipeline</p>
+                    <h2>Elpis</h2>
+                    <p class="auth-sub">Private report atelier</p>
                 </div>
             </div>
 
@@ -104,7 +104,7 @@
             <div class="header__icon">
                 <svg viewBox="0 0 40 40" fill="none">
                     <rect x="4" y="6" width="24" height="30" rx="2" stroke="currentColor" stroke-width="2"/>
-                    <rect x="12" y="4" width="24" height="30" rx="2" fill="var(--accent)" stroke="currentColor" stroke-width="2"/>
+                    <rect x="12" y="4" width="24" height="30" rx="2" fill="#fafafa" stroke="currentColor" stroke-width="2"/>
                     <line x1="17" y1="12" x2="31" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
                     <line x1="17" y1="17" x2="31" y2="17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
                     <line x1="17" y1="22" x2="27" y2="22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
@@ -113,7 +113,7 @@
             </div>
             <div class="header__text">
                 <h1>Elpis</h1>
-                <p class="header__sub">AI-powered report generation engine &mdash; built in pure C++</p>
+                <p class="header__sub">Scholarly reports, composed and typeset for print</p>
             </div>
             <div class="header__user" id="userBadge">
                 <span class="user__name" id="userName"></span>
@@ -212,28 +212,23 @@
                     </p>
                 </div>
                 <!-- Preview Section -->
-                <div class="result-card glass">
-                    <div class="result-header">
-                        <h2><i class="fas fa-file-pdf"></i> Generated Report</h2>
-                        <div class="result-actions">
-                            <a id="downloadPdf" href="#" class="btn btn-secondary btn-sm" download>
-                                <i class="fas fa-download"></i> Download PDF
-                            </a>
-                        </div>
+                <div class="result-preview">
+                    <div class="result-preview__header">
+                        <h2>Generated Report</h2>
+                        <a id="downloadPdf" href="#" class="download-inline" download>Download PDF</a>
                     </div>
                     <div id="pdfViewer" class="pdf-container">
                         <div class="pdf-placeholder">
-                            <i class="fas fa-file-invoice"></i>
-                            <p>Professional PDF report will appear here</p>
+                            <p>PDF preview will appear here</p>
                         </div>
                     </div>
                 </div>
 
                 <!-- NEW: Assets Section -->
-                <div id="assetsCard" class="result-card glass" style="display: none;">
-                    <div class="result-header">
-                        <h2><i class="fas fa-code"></i> Project Assets & Source Code</h2>
-                        <p class="subtitle">Generated alongside your academic report</p>
+                <div id="assetsCard" class="result-preview" style="display: none;">
+                    <div class="result-preview__header">
+                        <h2>Project Assets</h2>
+                        <span class="assets-hint">Generated alongside your report</span>
                     </div>
                     <div id="assetsList" class="assets-grid">
                         <!-- Assets will be injected here -->

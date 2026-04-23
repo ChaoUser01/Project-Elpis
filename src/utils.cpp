@@ -68,6 +68,24 @@ std::string extractJson(const std::string& input) {
     return input;
 }
 
+std::string escapeHtml(const std::string& input) {
+    std::string output;
+    output.reserve(input.size());
+
+    for (char ch : input) {
+        switch (ch) {
+            case '&': output += "&amp;"; break;
+            case '<': output += "&lt;"; break;
+            case '>': output += "&gt;"; break;
+            case '"': output += "&quot;"; break;
+            case '\'': output += "&#39;"; break;
+            default: output.push_back(ch); break;
+        }
+    }
+
+    return output;
+}
+
 // File I/O
 std::string readFile(const std::string& path) {
     std::ifstream f(path, std::ios::in);

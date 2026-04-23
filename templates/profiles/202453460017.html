@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    @page { size:A4; margin:18mm 17mm; }
+    :root { --bronze:#8a5a2b; --char:#23201d; --cream:#faf5ee; --rule:#decab2; --muted:#6f6154; }
+    body { margin:0; color:var(--char); font-family:Georgia, "Times New Roman", serif; line-height:1.62; background:white; }
+    .titleblock { padding:10mm 0 8mm; border-top:3px solid var(--bronze); border-bottom:1px solid var(--rule); }
+    .meta { text-transform:uppercase; letter-spacing:.14em; font-size:8.5pt; color:var(--bronze); }
+    h1 { margin:4mm 0 3mm; font-size:25pt; line-height:1.08; }
+    .subtitle { font-style:italic; color:var(--muted); font-size:11pt; }
+    .details { margin-top:5mm; font-size:9.6pt; color:var(--muted); }
+    .abstract { margin-top:7mm; background:var(--cream); border:1px solid var(--rule); padding:5mm 6mm; }
+    h2 { margin:8mm 0 3mm; font-size:13.5pt; color:var(--bronze); }
+    .body { text-align:justify; font-size:10.9pt; }
+    .figure { margin-top:4mm; padding:3mm 4mm; background:var(--cream); border-left:4px solid var(--bronze); font-size:9.5pt; color:var(--muted); }
+    .references { margin-top:10mm; border-top:1px solid var(--rule); padding-top:4mm; font-size:10pt; }
+    .references ol { padding-left:5mm; }
+  </style>
+</head>
+<body>
+  <header class="titleblock">
+    <div class="meta">Thesis Format</div>
+    <h1>{{ title }}</h1>
+    {% if subtitle %}<div class="subtitle">{{ subtitle }}</div>{% endif %}
+    <div class="details">{{ author }}{% if student_id %} | {{ student_id }}{% endif %} | {{ discipline }} | {{ date }}</div>
+    {% if abstract %}<div class="abstract"><strong>Abstract</strong><div>{{ abstract }}</div></div>{% endif %}
+  </header>
+  {% for section in sections %}
+  <section>
+    <h2>{{ section.heading }}</h2>
+    <div class="body">{{ section.body }}</div>
+    {% for chart in section.charts %}<div class="figure">{{ chart.title }} ({{ chart.type }})</div>{% endfor %}
+  </section>
+  {% endfor %}
+  {% if references %}<section class="references"><strong>References</strong><ol>{% for ref in references %}<li>{{ ref }}</li>{% endfor %}</ol></section>{% endif %}
+</body>
+</html>

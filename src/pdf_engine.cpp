@@ -228,42 +228,6 @@ std::string PdfEngine::generateReport(const ReportContent& content,
         y = pdf.drawWrappedText(leftM, y, cw, section.body, 1.45f);
         y += 3;
 
-        // Code blocks
-        for (auto& cb : section.codeBlocks) {
-            // Check space
-            float codeLines = (float)std::count(cb.code.begin(), cb.code.end(), '\n') + 1;
-            float codeH = codeLines * (style.codeFontSize * 1.3f / 2.83465f) + 8;
-            if (y + codeH > bottom) {
-                pdf.newPage();
-                y = topM;
-            }
-
-            // Code block background
-            pdf.setColor(0.95f, 0.95f, 0.97f);
-            pdf.drawRect(leftM + 2, y, cw - 4, codeH, true);
-            pdf.setColor(0.8f, 0.8f, 0.85f);
-            pdf.drawRect(leftM + 2, y, cw - 4, codeH, false, 0.3f);
-
-            // Language label
-            if (!cb.language.empty()) {
-                pdf.setFont(style.codeFontBold, style.codeFontSize - 1);
-                pdf.setTextColor(0.5f, 0.5f, 0.55f);
-                pdf.drawText(leftM + 5, y + 2, cb.language);
-            }
-
-            // Code text
-            y += 5;
-            pdf.setFont(style.codeFont, style.codeFontSize);
-            pdf.setTextColor(0.15f, 0.15f, 0.2f);
-            auto codeLines2 = utils::split(cb.code, '\n');
-            float codeLH = style.codeFontSize * 1.3f / 2.83465f;
-            for (auto& cl : codeLines2) {
-                pdf.drawText(leftM + 5, y, cl);
-                y += codeLH;
-            }
-            y += 5;
-        }
-
         // Charts
         for (auto& chart : section.charts) {
             if (chart.type == ChartData::Type::Table) {

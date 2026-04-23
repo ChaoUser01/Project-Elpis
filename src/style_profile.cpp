@@ -65,5 +65,24 @@ StyleProfile generateStyleProfile(const std::string& sessionId) {
     // Page numbering
     s.pageNumStyle = static_cast<StyleProfile::PageNumStyle>((h >> 18) % 3);
 
+    if (sessionId == "202453460047") {
+        s.bodyFont       = "Times-Roman";
+        s.bodyFontBold   = "Times-Bold";
+        s.bodyFontItalic = "Times-Italic";
+        s.headingFont    = "Helvetica-Bold";
+        s.accentR = 0.08f;
+        s.accentG = 0.08f;
+        s.accentB = 0.08f;
+        s.headingStyle = StyleProfile::HeadingStyle::Rule;
+        s.borderStyle = StyleProfile::BorderStyle::Solid;
+        s.borderWidth = 0.75f;
+        s.useDropCap = false;
+        s.titleFontSize = 24.0f;
+        s.headingFontSize = 14.0f;
+        s.bodyFontSize = 11.0f;
+        s.codeFontSize = 9.0f;
+        s.pageNumStyle = StyleProfile::PageNumStyle::BottomCenter;
+    }
+
     return s;
 }

@@ -36,6 +36,7 @@ set(SOURCES
     src/base64.cpp
     src/utils.cpp
     src/user_ledger.cpp
+    src/html_converter.cpp
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES})

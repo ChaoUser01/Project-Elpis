@@ -7,11 +7,22 @@
 #include <iomanip>
 #include <iostream>
 #include <fstream>
+#include <filesystem>
 #include <nlohmann/json.hpp>
 
 #pragma comment(lib, "bcrypt.lib")
 
 using json = nlohmann::json;
+
+void UserLedger::setDataDir(const std::string& dir) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (dataDir_ == dir) {
+        return;
+    }
+
+    dataDir_ = dir;
+    loadFromDisk();
+}
 
 // Crypto Helpers (Windows BCrypt)
 
@@ -118,6 +129,27 @@ void UserLedger::loadFromDisk() {
     }
 }
 
+std::string UserLedger::resolveTemplatePath(const std::string& studentId) {
+    if (dataDir_.empty()) return "./templates/profiles/default_academic.html";
+
+    // Path convention: templates/profiles/<ID>.html
+    std::string customPath = dataDir_ + "/templates/profiles/" + studentId + ".html";
+    if (std::filesystem::exists(customPath)) {
+        return customPath;
+    }
+
+    // Fallback to default academic (stable baseline), otherwise allow modern lab.
+    std::string academic = dataDir_ + "/templates/profiles/default_academic.html";
+    if (std::filesystem::exists(academic)) {
+        return academic;
+    }
+    std::string modern = dataDir_ + "/templates/profiles/default_modern_lab.html";
+    if (std::filesystem::exists(modern)) {
+        return modern;
+    }
+    return academic;
+}
+
 // Ledger Initialization
 
 UserLedger::UserLedger() {
@@ -128,7 +160,6 @@ UserLedger::UserLedger() {
         { "202453460047", "EL BARNOUSSI FATIMA EZZAHRA" },
         { "202453460052", "Tumpa Jannatul Fardous" },
         { "202453460073", "Nadeem Ahsen" },
-        { "202453460017", "KUSHWAH SAMARTH" },
     };
 
     for (auto& e : entries) {
@@ -252,21 +283,21 @@ std::string UserLedger::login(const std::string& studentId,
 
 // Session Validation
 
-const AuthSession* UserLedger::validateSession(const std::string& token) {
+std::optional<AuthSession> UserLedger::validateSession(const std::string& token) {
     std::lock_guard<std::mutex> lock(mutex_);
 
     auto it = sessions_.find(token);
-    if (it == sessions_.end()) return nullptr;
+    if (it == sessions_.end()) return std::nullopt;
 
     // Auto-expire sessions after 24 hours (easier for users)
     auto elapsed = std::chrono::steady_clock::now() - it->second.createdAt;
     auto hours = std::chrono::duration_cast<std::chrono::hours>(elapsed).count();
     if (hours >= 24) {
         sessions_.erase(it);
-        return nullptr;
+        return std::nullopt;
     }
 
-    return &it->second;
+    return it->second;
 }
 
 // Logout
@@ -282,10 +313,13 @@ void UserLedger::logout(const std::string& token) {
 
 // Accessors
 
-const UserRecord* UserLedger::getUser(const std::string& studentId) {
+std::optional<UserRecord> UserLedger::getUser(const std::string& studentId) {
     std::lock_guard<std::mutex> lock(mutex_);
     auto it = users_.find(studentId);
-    return (it != users_.end()) ? &it->second : nullptr;
+    if (it == users_.end()) {
+        return std::nullopt;
+    }
+    return it->second;
 }
 
 std::vector<std::pair<std::string, std::string>> UserLedger::getStudentList() {

@@ -31,6 +31,10 @@
     const resultTime     = document.getElementById('resultTime');
     const resultSession  = document.getElementById('resultSession');
     const downloadBtn    = document.getElementById('downloadBtn');
+    const downloadPdf    = document.getElementById('downloadPdf');
+    const pdfViewer      = document.getElementById('pdfViewer');
+    const assetsCard     = document.getElementById('assetsCard');
+    const assetsList     = document.getElementById('assetsList');
     const toastContainer = document.getElementById('toastContainer');
 
     let selectedFile = null;
@@ -301,6 +305,8 @@
         generateBtn.disabled = true;
         btnStatus.textContent = 'Analysing prompt...';
         resultCard.style.display = 'none';
+        assetsCard.style.display = 'none';
+        assetsList.innerHTML = '';
 
         try {
             // Build form data
@@ -382,11 +388,9 @@
 
             async function fetchAssets(sid) {
                 try {
-                    const res = await fetch(`/api/assets?session_id=${sid}`);
+                    const headers = authToken ? { 'Authorization': 'Bearer ' + authToken } : {};
+                    const res = await fetch(`/api/assets?session_id=${sid}`, { headers });
                     const assets = await res.json();
-
-                    const assetsCard = document.getElementById('assetsCard');
-                    const assetsList = document.getElementById('assetsList');
                     
                     if (assets && assets.length > 0) {
                         assetsCard.style.display = 'block';
@@ -394,26 +398,38 @@
                         
                         assets.forEach(filename => {
                             const ext = filename.split('.').pop().toLowerCase();
-                            let icon = 'fa-file-code';
-                            let lang = 'CODE';
+                            let badge = 'FILE';
+                            let lang = 'Asset';
                             
-                            if (ext === 'py') { icon = 'fa-brands fa-python'; lang = 'Python'; }
-                            else if (ext === 'js') { icon = 'fa-brands fa-js'; lang = 'JavaScript'; }
-                            else if (ext === 'cpp' || ext === 'h') { icon = 'fa-file-code'; lang = 'C++'; }
-                            else if (ext === 'html') { icon = 'fa-brands fa-html5'; lang = 'HTML'; }
-                            else if (ext === 'css') { icon = 'fa-brands fa-css3-alt'; lang = 'CSS'; }
+                            if (ext === 'py') { badge = 'PY'; lang = 'Python'; }
+                            else if (ext === 'js') { badge = 'JS'; lang = 'JavaScript'; }
+                            else if (ext === 'cpp') { badge = 'CPP'; lang = 'C++'; }
+                            else if (ext === 'h') { badge = 'H'; lang = 'C/C++ Header'; }
+                            else if (ext === 'html') { badge = 'HTML'; lang = 'HTML'; }
+                            else if (ext === 'css') { badge = 'CSS'; lang = 'CSS'; }
+                            else if (ext === 'md') { badge = 'MD'; lang = 'Markdown'; }
 
                             const card = document.createElement('div');
                             card.className = 'asset-card';
                             card.innerHTML = `
-                                <div class="asset-icon"><i class="fas ${icon}"></i></div>
+                                <div class="asset-icon">${badge}</div>
                                 <div class="asset-name">${filename}</div>
                                 <div class="asset-lang">${lang}</div>
-                                <a href="/api/download?session_id=${sid}&file=${filename}" class="btn-asset">
-                                    <i class="fas fa-download"></i> Download
-                                </a>
+                                <button type="button" class="btn-asset" data-session="${sid}" data-file="${filename}">
+                                    Download
+                                </button>
                             `;
                             assetsList.appendChild(card);
+                        });
+
+                        assetsList.querySelectorAll('.btn-asset').forEach((button) => {
+                            button.addEventListener('click', async () => {
+                                try {
+                                    await downloadAsset(button.dataset.session, button.dataset.file);
+                                } catch (error) {
+                                    showToast(error.message || 'Failed to download asset.', 'error');
+                                }
+                            });
                         });
                     } else {
                         assetsCard.style.display = 'none';
@@ -421,6 +437,26 @@
                 } catch (e) {
                     console.error('Failed to fetch assets', e);
                 }
+            }
+
+            async function downloadAsset(sid, filename) {
+                const headers = authToken ? { 'Authorization': 'Bearer ' + authToken } : {};
+                const res = await fetch(`/api/download?session_id=${encodeURIComponent(sid)}&file=${encodeURIComponent(filename)}`, {
+                    headers
+                });
+                if (!res.ok) {
+                    throw new Error('Failed to download asset.');
+                }
+
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
             }
             
             es.onerror = (err) => {

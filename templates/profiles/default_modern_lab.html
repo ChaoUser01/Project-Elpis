@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    @page { size: A4; margin: 18mm 16mm; }
+    :root { --ink:#111; --muted:#555; --rule:#d6d6dd; --accent:#2b4ea2; }
+    body {
+      font-family: "Times New Roman", Times, serif;
+      color: var(--ink);
+      line-height: 1.55;
+      margin: 0;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .topbar {
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--ink);
+      margin-bottom: 14px;
+    }
+    .identity {
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      font-size: 11.5pt;
+      color: var(--ink);
+    }
+    .meta {
+      margin-top: 4px;
+      font-size: 10pt;
+      color: var(--muted);
+    }
+    h1 {
+      margin: 14px 0 4px 0;
+      font-size: 18pt;
+      line-height: 1.2;
+      color: var(--accent);
+    }
+    .subtitle {
+      margin: 0 0 10px 0;
+      font-style: italic;
+      color: var(--muted);
+      font-size: 11pt;
+    }
+    .abstract {
+      margin: 12px 0 10px 0;
+      padding: 10px 12px;
+      border: 1px solid var(--rule);
+      background: #fafafa;
+    }
+    .abstract strong { display:block; margin-bottom: 6px; letter-spacing: 0.6px; }
+    h2 {
+      margin: 18px 0 8px 0;
+      font-size: 13.5pt;
+      border-bottom: 1px solid var(--rule);
+      padding-bottom: 4px;
+    }
+    .body { text-align: justify; font-size: 11pt; }
+    .code-block {
+      margin: 10px 0 14px 0;
+      padding: 10px 12px;
+      border: 1px solid var(--rule);
+      background: #f6f7fb;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      white-space: pre-wrap;
+      page-break-inside: avoid;
+    }
+    .code-meta {
+      font-family: "Times New Roman", Times, serif;
+      font-size: 9.5pt;
+      color: var(--muted);
+      margin-bottom: 6px;
+      letter-spacing: 0.4px;
+    }
+    .figure {
+      margin: 10px 0 14px 0;
+      padding: 10px 12px;
+      border: 1px dashed var(--rule);
+      color: var(--muted);
+      font-size: 10pt;
+      page-break-inside: avoid;
+    }
+    .references {
+      margin-top: 18px;
+      border-top: 1px solid var(--rule);
+      padding-top: 10px;
+      font-size: 10.5pt;
+    }
+    .references ol { padding-left: 18px; }
+    .references li { margin: 6px 0; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="identity">{{ author }}{% if student_id %} — {{ student_id }}{% endif %}</div>
+    <div class="meta">{{ discipline }}{% if date %} • {{ date }}{% endif %}</div>
+  </div>
+
+  <h1>{{ title }}</h1>
+  {% if subtitle %}<div class="subtitle">{{ subtitle }}</div>{% endif %}
+
+  {% if abstract %}
+  <div class="abstract">
+    <strong>ABSTRACT</strong>
+    <div class="body">{{ abstract }}</div>
+  </div>
+  {% endif %}
+
+  {% for section in sections %}
+  <h2>{{ section.heading }}</h2>
+  <div class="body">{{ section.body }}</div>
+
+  {% for cb in section.codeBlocks %}
+  <div class="code-block">
+    <div class="code-meta">{{ cb.language }} — {{ cb.filename }}</div>
+    {{ cb.code }}
+  </div>
+  {% endfor %}
+
+  {% for chart in section.charts %}
+  <div class="figure">[ Figure: {{ chart.title }} ({{ chart.type }}) ]</div>
+  {% endfor %}
+  {% endfor %}
+
+  {% if references %}
+  <div class="references">
+    <strong>REFERENCES</strong>
+    <ol>
+      {% for ref in references %}
+      <li>{{ ref }}</li>
+      {% endfor %}
+    </ol>
+  </div>
+  {% endif %}
+</body>
+</html>

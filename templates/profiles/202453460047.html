@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    @page { size: A4; margin: 18mm 16mm 20mm 16mm; }
+    :root { --ink:#111111; --soft:#5c5c5c; --rule:#bdbdbd; --paper:#f6f6f4; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: white;
+      font-family: "Times New Roman", Times, serif;
+      line-height: 1.58;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .cover {
+      border: 2px solid var(--ink);
+      padding: 18mm 14mm 16mm 14mm;
+      min-height: 240mm;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .cover-kicker {
+      text-transform: uppercase;
+      letter-spacing: 0.24em;
+      font-size: 9pt;
+      color: var(--soft);
+    }
+    h1 {
+      margin: 16mm 0 5mm 0;
+      font-size: 26pt;
+      line-height: 1.08;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .subtitle {
+      font-size: 12pt;
+      font-style: italic;
+      color: var(--soft);
+      margin-bottom: 10mm;
+    }
+    .identity {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8mm;
+      padding-top: 8mm;
+      border-top: 1px solid var(--rule);
+      font-size: 10pt;
+    }
+    .abstract {
+      margin: 10mm 0 0 0;
+      padding: 6mm 7mm;
+      background: var(--paper);
+      border-left: 4px solid var(--ink);
+    }
+    .abstract strong, .references strong {
+      display: block;
+      margin-bottom: 4mm;
+      letter-spacing: 0.12em;
+      font-size: 9pt;
+      text-transform: uppercase;
+    }
+    .section {
+      margin-top: 9mm;
+      page-break-inside: avoid;
+    }
+    h2 {
+      margin: 0 0 4mm 0;
+      font-size: 13.5pt;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      border-bottom: 1px solid var(--ink);
+      padding-bottom: 2mm;
+    }
+    .body {
+      text-align: justify;
+      font-size: 11pt;
+    }
+    .figure {
+      margin: 5mm 0 0 0;
+      padding: 4mm 5mm;
+      border: 1px dashed var(--rule);
+      color: var(--soft);
+      font-size: 9.5pt;
+    }
+    .references {
+      margin-top: 12mm;
+      padding-top: 5mm;
+      border-top: 1.5px solid var(--ink);
+      font-size: 10pt;
+    }
+    .references ol { margin: 0; padding-left: 5mm; }
+    .references li { margin: 2.5mm 0; }
+  </style>
+</head>
+<body>
+  <section class="cover">
+    <div>
+      <div class="cover-kicker">Academic Report</div>
+      <h1>{{ title }}</h1>
+      {% if subtitle %}<div class="subtitle">{{ subtitle }}</div>{% endif %}
+      {% if abstract %}
+      <div class="abstract">
+        <strong>Abstract</strong>
+        <div>{{ abstract }}</div>
+      </div>
+      {% endif %}
+    </div>
+    <div class="identity">
+      <div><strong>Author</strong><br>{{ author }}</div>
+      <div><strong>Record</strong><br>{% if student_id %}{{ student_id }}{% endif %}</div>
+      <div><strong>Discipline</strong><br>{{ discipline }}</div>
+      <div><strong>Date</strong><br>{{ date }}</div>
+    </div>
+  </section>
+
+  {% for section in sections %}
+  <section class="section">
+    <h2>{{ section.heading }}</h2>
+    <div class="body">{{ section.body }}</div>
+    {% for chart in section.charts %}
+    <div class="figure">{{ chart.title }} ({{ chart.type }})</div>
+    {% endfor %}
+  </section>
+  {% endfor %}
+
+  {% if references %}
+  <section class="references">
+    <strong>References</strong>
+    <ol>
+      {% for ref in references %}
+      <li>{{ ref }}</li>
+      {% endfor %}
+    </ol>
+  </section>
+  {% endif %}
+</body>
+</html>

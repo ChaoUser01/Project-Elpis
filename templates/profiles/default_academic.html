@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        @page {
+            size: A4;
+            margin: 25mm 20mm;
+        }
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            color: #111;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            text-align: justify;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 50px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 20px;
+        }
+        .identity {
+            font-size: 1.0em;
+            letter-spacing: 1px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #222;
+        }
+        h1.title {
+            font-size: 2.2em;
+            margin: 20px 0 10px 0;
+            line-height: 1.2;
+        }
+        .subtitle {
+            font-style: italic;
+            font-size: 1.2em;
+            color: #444;
+            margin-bottom: 20px;
+        }
+        .author-info {
+            font-size: 1.1em;
+            margin-top: 10px;
+        }
+        .discipline {
+            font-weight: bold;
+            color: #555;
+            margin-top: 5px;
+        }
+        .date {
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: #777;
+        }
+        h2 {
+            font-size: 1.5em;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 5px;
+            margin-top: 40px;
+            text-align: left;
+            color: #222;
+        }
+        .abstract {
+            margin: 30px 40px;
+            font-style: italic;
+            background: #f9f9f9;
+            padding: 20px;
+            border-left: 4px solid #ccc;
+        }
+        .abstract-title {
+            font-weight: bold;
+            text-align: center;
+            display: block;
+            margin-bottom: 10px;
+            font-style: normal;
+        }
+        .content-section {
+            margin-bottom: 25px;
+        }
+        .code-block {
+            background-color: #f4f4f4;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9em;
+            white-space: pre-wrap;
+            margin: 20px 0;
+            color: #333;
+        }
+        .code-lang {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #666;
+            font-size: 0.8em;
+            text-transform: uppercase;
+        }
+        .chart-placeholder {
+            text-align: center;
+            margin: 30px 0;
+            font-style: italic;
+            color: #888;
+        }
+        .references {
+            margin-top: 50px;
+            font-size: 0.95em;
+        }
+        .references ol {
+            padding-left: 20px;
+        }
+        .references li {
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="identity">{{ author }}{% if student_id %} &mdash; {{ student_id }}{% endif %}</div>
+        <h1 class="title">{{ title }}</h1>
+        {% if subtitle %}<div class="subtitle">{{ subtitle }}</div>{% endif %}
+        <!-- Intentionally identity-minimal: no institution branding -->
+        <div class="discipline">{{ discipline }}</div>
+        <div class="date">{{ date }}</div>
+    </div>
+
+    {% if abstract %}
+    <div class="abstract">
+        <span class="abstract-title">ABSTRACT</span>
+        {{ abstract }}
+    </div>
+    {% endif %}
+
+    {% for section in sections %}
+    <div class="content-section">
+        <h2>{{ section.heading }}</h2>
+        <div class="body">{{ section.body }}</div>
+        
+        {% for cb in section.codeBlocks %}
+        <div class="code-block">
+            <span class="code-lang">{{ cb.language }} &mdash; {{ cb.filename }}</span>
+            {{ cb.code }}
+        </div>
+        {% endfor %}
+
+        {% for chart in section.charts %}
+        <div class="chart-placeholder">
+            [ Figure: {{ chart.title }} ({{ chart.type }}) ]
+        </div>
+        {% endfor %}
+    </div>
+    {% endfor %}
+
+    {% if references %}
+    <div class="references">
+        <hr>
+        <h3>References</h3>
+        <ol>
+        {% for ref in references %}
+            <li>{{ ref }}</li>
+        {% endfor %}
+        </ol>
+    </div>
+    {% endif %}
+</body>
+</html>

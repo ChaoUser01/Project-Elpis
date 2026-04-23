@@ -42,7 +42,7 @@ int main(int argc, char* argv[]) {
             apiKey = argv[++i];
         }
         else if (arg == "--help" || arg == "-h") {
-            std::cout << "Elpis - C++ Engine\n\n"
+            std::cout << "Elpis - Shall Bring an End to All Of It\n\n"
                       << "Usage: elpis_engine [OPTIONS]\n\n"
                       << "Options:\n"
                       << "  -p, --port <PORT>      Server port (default: 8000)\n"

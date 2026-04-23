@@ -1,20 +1,15 @@
 #pragma once
 #include <string>
-#include <map>
-#include <vector>
+#include <nlohmann/json.hpp>
 
-// Simple template engine (Jinja2-like syntax)
+// Simple JSON-driven template engine (Jinja2-like syntax)
 // Supports:  {{ variable }}
-//            {% for item in list %}...{% endfor %}
+//            {% for item in array %}...{% endfor %}
 //            {% if variable %}...{% endif %}
+//            Nested tags and recursive expansion.
 
 class TemplateEngine {
 public:
-    using VarMap  = std::map<std::string, std::string>;
-    using ListMap = std::map<std::string, std::vector<VarMap>>;
-
-    // Render a template string with the given variables and lists.
-    static std::string render(const std::string& tmpl,
-                              const VarMap& vars,
-                              const ListMap& lists = {});
+    // Render a template string with the given JSON context.
+    static std::string render(const std::string& tmpl, const nlohmann::json& data);
 };

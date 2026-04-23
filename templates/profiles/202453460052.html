@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    @page { size:A4; margin:16mm 15mm 18mm 15mm; }
+    :root { --emerald:#1f6b55; --mint:#eef7f3; --ink:#183128; --muted:#5a7168; --rule:#cfe2d8; }
+    body { margin:0; font-family:Arial, Helvetica, sans-serif; color:var(--ink); line-height:1.55; }
+    .hero { border:2px solid var(--emerald); padding:9mm 10mm; }
+    .grid { display:grid; grid-template-columns:2fr 1fr; gap:8mm; align-items:end; }
+    h1 { margin:0; font-size:23pt; line-height:1.08; }
+    .subtitle { margin-top:3mm; color:var(--muted); font-size:11pt; }
+    .meta { text-align:right; font-size:9.5pt; color:var(--muted); }
+    .abstract { margin-top:6mm; background:var(--mint); padding:5mm 6mm; border-radius:4mm; }
+    h2 { margin:8mm 0 3mm; font-size:13pt; color:var(--emerald); }
+    .body { font-size:10.8pt; text-align:justify; }
+    .figure { margin-top:4mm; padding:3mm 4mm; border:1px solid var(--rule); border-radius:3mm; background:#fafdfb; font-size:9.4pt; color:var(--muted); }
+    .references { margin-top:9mm; border-top:2px solid var(--rule); padding-top:4mm; font-size:9.8pt; }
+    .references ol { padding-left:5mm; }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="grid">
+      <div>
+        <h1>{{ title }}</h1>
+        {% if subtitle %}<div class="subtitle">{{ subtitle }}</div>{% endif %}
+      </div>
+      <div class="meta">{{ author }}{% if student_id %}<br>{{ student_id }}{% endif %}<br>{{ discipline }}<br>{{ date }}</div>
+    </div>
+    {% if abstract %}<div class="abstract"><strong>Abstract</strong><div>{{ abstract }}</div></div>{% endif %}
+  </header>
+  {% for section in sections %}
+  <section>
+    <h2>{{ section.heading }}</h2>
+    <div class="body">{{ section.body }}</div>
+    {% for chart in section.charts %}<div class="figure">{{ chart.title }} ({{ chart.type }})</div>{% endfor %}
+  </section>
+  {% endfor %}
+  {% if references %}<section class="references"><strong>References</strong><ol>{% for ref in references %}<li>{{ ref }}</li>{% endfor %}</ol></section>{% endif %}
+</body>
+</html>

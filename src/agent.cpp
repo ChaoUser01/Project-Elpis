@@ -8,8 +8,30 @@
 #include <algorithm>
 #include <iomanip>
 #include <iostream>
+#include <array>
+#include <set>
 
 using json = nlohmann::json;
+
+static bool containsAny(const std::string& haystackLower, const std::initializer_list<const char*>& needlesLower) {
+    for (const char* n : needlesLower) {
+        if (haystackLower.find(n) != std::string::npos) return true;
+    }
+    return false;
+}
+
+static size_t approximateWordCount(const std::string& s) {
+    size_t words = 0;
+    bool inWord = false;
+    for (unsigned char c : s) {
+        if (std::isalnum(c)) {
+            if (!inWord) { inWord = true; words++; }
+        } else {
+            inWord = false;
+        }
+    }
+    return words;
+}
 
 Agent::Agent() {
     // No longer auto-load from env — keys come from BYOK login
@@ -50,10 +72,10 @@ void Agent::resolveEndpoint(std::string& outUrl, std::string& outModel) {
 
     if (provider == "groq") {
         outUrl   = "https://api.groq.com/openai/v1/chat/completions";
-        outModel = model_.empty() ? "llama-3.3-70b-versatile" : model_;
+        outModel = model_.empty() ? "qwen/qwen3-32b" : model_; 
     } else if (provider == "gemini") {
         outUrl   = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
-        outModel = model_.empty() ? "gemini-1.5-flash" : model_;
+        outModel = model_.empty() ? "gemini-2.5-flash" : model_;
     } else {
         outUrl   = "https://api.openai.com/v1/chat/completions";
         outModel = model_.empty() ? "gpt-4o" : model_;
@@ -117,46 +139,278 @@ std::string Agent::detectDiscipline(const std::string& prompt) {
     return "General Academic";
 }
 
+bool Agent::topicRequiresCode(const std::string& prompt) const {
+    const std::string lower = utils::toLower(prompt);
+    static const std::array<const char*, 17> implementationSignals = {{
+        "code", "implement", "implementation", "build ", "develop", "script",
+        "program", "prototype", "simulation", "dataset", "train a model",
+        "api", "application", "dashboard", "workflow", "automation", "algorithm"
+    }};
+
+    static const std::array<const char*, 12> conceptSignals = {{
+        "implication", "implications", "ethics", "ethical", "society",
+        "social", "policy", "history", "overview", "literature review",
+        "essay", "discussion"
+    }};
+
+    bool hasImplementationSignal = std::any_of(
+        implementationSignals.begin(), implementationSignals.end(),
+        [&](const char* token) { return lower.find(token) != std::string::npos; });
+
+    bool hasConceptSignal = std::any_of(
+        conceptSignals.begin(), conceptSignals.end(),
+        [&](const char* token) { return lower.find(token) != std::string::npos; });
+
+    if (hasConceptSignal && !hasImplementationSignal) {
+        return false;
+    }
+
+    return hasImplementationSignal;
+}
+
+bool Agent::isRenderedHtmlAcceptable(const std::string& html) {
+    if (html.size() < 200) return false;
+    // Hard safety gates: no scripts.
+    const std::string lower = utils::toLower(html);
+    if (containsAny(lower, {"<script", "javascript:"})) {
+        return false;
+    }
+    // Block remote resources (but allow https links in text/references).
+    if (containsAny(lower, {"src=\"http://", "src=\"https://", "href=\"http://", "href=\"https://"})) {
+        return false;
+    }
+    // Must look like a full document.
+    if (lower.find("<html") == std::string::npos || lower.find("<body") == std::string::npos) {
+        return false;
+    }
+    return true;
+}
+
+void Agent::normalizeAssets(ReportContent& content, bool wantsCodeAssets) {
+    if (!wantsCodeAssets) {
+        content.assets.clear();
+        for (auto& section : content.sections) {
+            section.codeBlocks.clear();
+        }
+        return;
+    }
+
+    std::vector<CodeBlock> mergedAssets = content.assets;
+    for (auto& section : content.sections) {
+        for (auto& block : section.codeBlocks) {
+            if (!block.code.empty()) {
+                mergedAssets.push_back(block);
+            }
+        }
+        section.codeBlocks.clear();
+    }
+
+    std::vector<CodeBlock> normalized;
+    std::set<std::string> seen;
+    bool hasGuide = false;
+
+    for (const auto& asset : mergedAssets) {
+        if (asset.code.empty()) {
+            continue;
+        }
+
+        CodeBlock clean = asset;
+        clean.filename = utils::trim(clean.filename);
+        if (clean.filename.empty()) {
+            clean.filename = "artifact";
+        }
+
+        const std::string key = utils::toLower(clean.filename + "::" + clean.language);
+        if (!seen.insert(key).second) {
+            continue;
+        }
+
+        const std::string lowerName = utils::toLower(clean.filename);
+        if (lowerName == "readme" || lowerName == "readme.md" || lowerName == "setup.txt" || lowerName == "requirements.txt") {
+            hasGuide = true;
+        }
+
+        normalized.push_back(clean);
+    }
+
+    if (!normalized.empty() && !hasGuide) {
+        CodeBlock guide;
+        guide.filename = "README.md";
+        guide.language = "markdown";
+        guide.code =
+            "# Asset Bundle\n\n"
+            "Generated alongside the report.\n\n"
+            "## Files\n";
+        for (const auto& asset : normalized) {
+            guide.code += "- `" + asset.filename + "`\n";
+        }
+        guide.code += "\n## Usage\nOpen the files in dependency order and adapt runtime requirements to the target environment.\n";
+        normalized.push_back(guide);
+    }
+
+    content.assets = std::move(normalized);
+}
+
+Agent::IntentDecision Agent::classifyIntent(const std::string& prompt, const std::string& templateHtml) {
+    IntentDecision d;
+
+    // Hard override: if local heuristic says code is needed, do not allow the classifier to downgrade it.
+    // This prevents "missing code" in clearly implementation-oriented prompts.
+    const bool heuristicWantsAssets = topicRequiresCode(prompt);
+
+    // If no API key, we can only use heuristics.
+    if (!hasApiKey()) {
+        d.wantsAssets = heuristicWantsAssets;
+        d.reportOnly = !d.wantsAssets;
+        d.confidence = 0.5;
+        d.reason = "heuristic_no_key";
+        return d;
+    }
+
+    // Resolve provider-specific endpoint
+    std::string resolvedUrl, resolvedModel;
+    resolveEndpoint(resolvedUrl, resolvedModel);
+
+    // Trim API key (crucial for Windows .env files which may have \r)
+    std::string cleanKey = utils::trim(apiKey_);
+
+    // Lightweight classifier (cheap + strict JSON).
+    // It should decide based on user intent: do they need runnable artifacts, or only a print-ready report?
+    const std::string systemPrompt =
+        "Return ONLY valid JSON. Decide whether this academic request requires runnable code/assets.\n"
+        "You must choose one mode:\n"
+        "- \"report_only\": a rigorous lab report with no runnable assets.\n"
+        "- \"report_plus_assets\": include standalone runnable artifacts only if essential to execute analysis/simulation/data processing.\n\n"
+        "Output schema:\n"
+        "{\n"
+        "  \"mode\": \"report_only\" | \"report_plus_assets\",\n"
+        "  \"needs_code\": boolean,\n"
+        "  \"confidence\": number,\n"
+        "  \"reason\": string\n"
+        "}\n\n"
+        "Rules:\n"
+        "- Default to report_only unless the user asked for computation, simulation, dataset processing, plotting automation, or reproducibility scripts.\n"
+        "- A lab report can contain equations/derivations without needing code.\n"
+        "- If a template is provided, treat it as a print-only deliverable.";
+
+    json systemMsg = {{"role", "system"}, {"content", systemPrompt}};
+    json userMsg = {{"role", "user"}, {"content", "PROMPT:\n" + prompt + "\n\nTEMPLATE_PRESENT: " + std::string(templateHtml.empty() ? "false" : "true")}};
+
+    json reqBody = {
+        {"model", resolvedModel},
+        {"messages", json::array({systemMsg, userMsg})},
+        {"temperature", 0.0},
+        {"max_tokens", 256}
+    };
+
+    if (resolvedUrl.find("groq.com") == std::string::npos) {
+        reqBody["response_format"] = {{"type", "json_object"}};
+    }
+
+    HttpClient client;
+    auto resp = client.post(
+        resolvedUrl,
+        reqBody.dump(),
+        {
+            {"Content-Type", "application/json"},
+            {"Authorization", "Bearer " + cleanKey}
+        }
+    );
+
+    if (!resp.ok()) {
+        d.wantsAssets = heuristicWantsAssets;
+        d.reportOnly = !d.wantsAssets;
+        d.confidence = 0.4;
+        d.reason = "classifier_http_" + std::to_string(resp.status);
+        return d;
+    }
+
+    try {
+        auto j = json::parse(resp.body);
+        auto text = j["choices"][0]["message"]["content"].get<std::string>();
+        std::string cleanedJson = utils::extractJson(text);
+        auto data = json::parse(cleanedJson);
+
+        const std::string mode = data.value("mode", "report_only");
+        const bool needsCode = data.value("needs_code", false);
+        const double conf = data.value("confidence", 0.0);
+        const std::string reason = data.value("reason", "");
+
+        d.wantsAssets = (mode == "report_plus_assets") || needsCode || heuristicWantsAssets;
+        d.reportOnly = !d.wantsAssets;
+        d.confidence = conf;
+        d.reason = reason;
+        return d;
+    } catch (...) {
+        d.wantsAssets = heuristicWantsAssets;
+        d.reportOnly = !d.wantsAssets;
+        d.confidence = 0.35;
+        d.reason = "classifier_parse_error";
+        return d;
+    }
+}
+
 // ── LLM-based generation ──────────────────────────────────────────────────
 
-ReportContent Agent::generateWithLLM(const std::string& prompt) {
-    HttpClient client;
+ReportContent Agent::generate(const std::string& prompt, const std::string& templateHtml, const std::string& designBrief) {
+    if (!hasApiKey()) {
+        std::cout << "[Agent] No API key provided, using Demo Mode." << std::endl;
+        return generateDemo(prompt);
+    }
 
-     json systemMsg = {
+    HttpClient client;
+    const IntentDecision intent = classifyIntent(prompt, templateHtml);
+    const bool wantsCodeAssets = intent.wantsAssets;
+    const std::string codeDirective = wantsCodeAssets
+        ? "MODE=report_plus_assets. Put runnable deliverables in the top-level assets array, not inside the report body. Each asset must be complete, coherent, and directly useful."
+        : "MODE=report_only. assets MUST be an empty array and every section.codeBlocks MUST be empty. Do not include any runnable code files.";
+
+    json systemMsg = {
         {"role", "system"},
         {"content",
-         "You are an elite academic professor and researcher. Generate a definitive, university-level report "
-         "based on the user's prompt. Your output must be academically rigorous, use formal terminology, "
-         "and include detailed analysis. Return ONLY valid JSON with this structure:\n"
+         "You are an expert academic report agent. Produce one polished report tailored to the user's request.\n\n"
+         "Return ONLY valid JSON with this schema:\n"
          "{\n"
-         "  \"title\": \"...\",\n"
-         "  \"subtitle\": \"...\",\n"
-         "  \"abstract\": \"200-300 word formal abstract covering objectives, methodology, and findings\",\n"
-         "  \"discipline\": \"...\",\n"
-         "  \"sections\": [\n"
-         "    {\n"
-         "      \"heading\": \"1. Introduction (or other heading)\",\n"
-         "      \"body\": \"Detailed academic prose with citations...\",\n"
-         "      \"assets\": [{\"filename\": \"analysis.py\", \"language\": \"python\", \"code\": \"...\"}],\n"
-         "      \"charts\": [{\"type\": \"bar\", \"title\": \"Performance Comparison\", "
-         "\"labels\": [\"A\", \"B\"], \"values\": [0.85, 0.92]}]\n"
-         "    }\n"
-         "  ],\n"
-         "  \"references\": [\"[1] Author, A. (Year). Title. Journal, Vol(No).\", ...]\n"
-         "}\n"
-         "CRITICAL REQUIREMENTS:\n"
-         "1. Use elevated academic tone (no conversational filler).\n"
-         "2. Include 6-8 comprehensive sections.\n"
-         "   - One section MUST be dedicated to 'Implementation and Setup Guide' if code assets are provided.\n"
-         "3. For technical topics, include 2-4 significant 'assets' (source code files) in relevant sections.\n"
-         "   - If the logic is compact (< 300 lines), use a single well-structured file.\n"
-         "   - If the logic is complex or modular, use multiple separate files (e.g. main, utils, model).\n"
-         "   - MANDATORY: If code is provided, include an asset named 'README.md' or 'SETUP.txt' with clear execution instructions.\n"
-         "   - Provide semantic, production-ready filenames.\n"
-         "   - Ensure code is self-contained, error-free, and specifies any environment requirements.\n"
-         "   - NEVER include code related to the Elpis report generator engine itself. Only provide code for the research topic.\n"
-         "4. Graphs MUST use realistic numerical data, not placeholders.\n"
-         "5. Citations MUST be formatted in APA/IEEE style."}
+         "  \"title\": string,\n"
+         "  \"subtitle\": string,\n"
+         "  \"author\": string,\n"
+         "  \"institution\": string,\n"
+         "  \"discipline\": string,\n"
+         "  \"abstract\": string,\n"
+         "  \"sections\": [{\n"
+         "     \"heading\": string,\n"
+         "     \"body\": string,\n"
+         "     \"codeBlocks\": [{\"filename\": string, \"language\": string, \"code\": string}],\n"
+         "     \"charts\": [{\n"
+         "        \"title\": string,\n"
+         "        \"type\": \"bar\"|\"line\"|\"pie\"|\"table\",\n"
+         "        \"labels\": [string],\n"
+         "        \"values\": [number],\n"
+         "        \"headers\": [string],\n"
+         "        \"rows\": [[string]]\n"
+         "     }]\n"
+         "  }],\n"
+         "  \"references\": [string],\n"
+         "  \"rendered_html\": string,\n"
+         "  \"assets\": [{\"filename\": string, \"language\": string, \"code\": string}]\n"
+         "}\n\n"
+         "REPORT RULES:\n"
+         "1. The primary deliverable is the report itself, not implementation material.\n"
+         "2. `rendered_html` must be a complete, valid HTML document suitable for PDF conversion.\n"
+         "3. The supplied template is a visual reference, not a rigid cage. You may substantially redesign layout, hierarchy, borders, cover treatment, spacing, and section presentation while preserving academic clarity and the requested theme.\n"
+         "4. Only include entries in `assets` when code, setup files, or reproducible artifacts are genuinely needed for the user's request.\n"
+         "5. Keep runnable code out of the report body. The PDF should read like a polished report, while implementation files live in `assets`.\n"
+         "6. If charts are not useful, return an empty charts array.\n"
+         "7. Never include code related to the report engine itself.\n"
+         "8. Keep the report academically polished, topic-aware, and free of filler.\n"
+         "9. Identity-minimal: do NOT invent or mention universities, departments, campuses, supervisors, or locations. Use only the provided author identity.\n"
+         "9. Make the report rigorous and sufficiently long: target ~1500–2500 words unless the prompt is extremely narrow.\n"
+         "10. Include the following sections where applicable: Introduction, Theory/Background, Methodology, Results, Discussion, Conclusion.\n"
+         "11. Include at least 8 references unless the topic is exceptionally constrained.\n"
+         "12. Include 1–3 charts/tables when they materially improve clarity (use table for measured data; bar/line for comparisons/trends).\n\n"
+         "DECISION GUIDANCE:\n" + codeDirective + "\n\n"
+         "DESIGN BRIEF:\n" + designBrief + "\n\n"
+         "TEMPLATE REFERENCE:\n" + templateHtml}
     };
 
     json userMsg = {{"role", "user"}, {"content", prompt}};
@@ -214,6 +468,7 @@ ReportContent Agent::generateWithLLM(const std::string& prompt) {
         content.subtitle   = data.value("subtitle", "");
         content.abstractText = data.value("abstract", "");
         content.discipline = data.value("discipline", detectDiscipline(prompt));
+        content.renderedHtml = data.value("rendered_html", "");
         
         // Preserve author if already set (e.g. by server from session)
         if (content.author.empty()) {
@@ -237,8 +492,8 @@ ReportContent Agent::generateWithLLM(const std::string& prompt) {
                 s.heading = sec.value("heading", "Section");
                 s.body    = sec.value("body", "");
 
-                if (sec.contains("assets")) {
-                    for (auto& cb : sec["assets"]) {
+                if (sec.contains("codeBlocks")) {
+                    for (auto& cb : sec["codeBlocks"]) {
                         CodeBlock block;
                         block.filename = cb.value("filename", "script.py");
                         block.language = cb.value("language", "text");
@@ -254,10 +509,20 @@ ReportContent Agent::generateWithLLM(const std::string& prompt) {
                         else if (type == "pie") cd.type = ChartData::Type::Pie;
                         else cd.type = ChartData::Type::Bar;
                         cd.title = ch.value("title", "Chart");
-                        if (ch.contains("labels"))
-                            cd.labels = ch["labels"].get<std::vector<std::string>>();
-                        if (ch.contains("values"))
-                            cd.values = ch["values"].get<std::vector<float>>();
+                        if (ch.contains("labels") && ch["labels"].is_array()) {
+                            for (auto& item : ch["labels"]) {
+                                if (item.is_string()) cd.labels.push_back(item.get<std::string>());
+                                else if (item.is_number()) cd.labels.push_back(item.dump());
+                            }
+                        }
+                        if (ch.contains("values") && ch["values"].is_array()) {
+                            for (auto& item : ch["values"]) {
+                                if (item.is_number()) cd.values.push_back(item.get<float>());
+                                else if (item.is_string()) {
+                                    try { cd.values.push_back(std::stof(item.get<std::string>())); } catch(...) {}
+                                }
+                            }
+                        }
                         s.charts.push_back(cd);
                     }
                 }
@@ -265,8 +530,180 @@ ReportContent Agent::generateWithLLM(const std::string& prompt) {
             }
         }
 
-        if (data.contains("references")) {
-            content.references = data["references"].get<std::vector<std::string>>();
+        if (data.contains("references") && data["references"].is_array()) {
+            for (auto& item : data["references"]) {
+                if (item.is_string()) content.references.push_back(item.get<std::string>());
+                else if (item.is_number()) content.references.push_back(item.dump());
+            }
+        }
+
+        if (data.contains("assets") && data["assets"].is_array()) {
+            for (auto& asset : data["assets"]) {
+                CodeBlock block;
+                block.filename = asset.value("filename", "asset.txt");
+                block.language = asset.value("language", "text");
+                block.code     = asset.value("code", "");
+                if (!block.code.empty()) {
+                    content.assets.push_back(block);
+                }
+            }
+        }
+
+        normalizeAssets(content, wantsCodeAssets);
+
+        // Safety/quality gate: if rendered_html is present but unsafe/invalid, drop it so the server falls back to template rendering.
+        if (!content.renderedHtml.empty() && !isRenderedHtmlAcceptable(content.renderedHtml)) {
+            std::cerr << "[Agent] rendered_html rejected by safety gate; falling back to TemplateEngine." << std::endl;
+            content.renderedHtml.clear();
+        }
+
+        // Quality gate: if too short or missing required assets, do a single "expand/repair" pass.
+        const size_t minWords = wantsCodeAssets ? 1200 : 1400;
+        size_t words = approximateWordCount(content.abstractText);
+        for (const auto& s : content.sections) words += approximateWordCount(s.body);
+        const bool missingAssets = wantsCodeAssets && content.assets.empty();
+
+        if (words < minWords || missingAssets || content.sections.size() < 5 || content.references.size() < 8) {
+            std::cout << "[Agent] Expanding/repairing report (words=" << words
+                      << ", sections=" << content.sections.size()
+                      << ", refs=" << content.references.size()
+                      << ", missingAssets=" << (missingAssets ? "yes" : "no") << ")" << std::endl;
+
+            json repairSystem = {
+                {"role", "system"},
+                {"content",
+                    "Return ONLY valid JSON in the same schema as before.\n"
+                    "You will be given a draft JSON report. Improve it to satisfy requirements:\n"
+                    "- Expand to be rigorous and detailed (target 1500–2500 words unless truly narrow).\n"
+                    "- Ensure >= 6 substantive sections when applicable.\n"
+                    "- Ensure >= 8 references.\n"
+                    "- If MODE=report_plus_assets: include at least 1–3 standalone runnable assets (scripts/notebooks/config) that directly support analysis.\n"
+                    "- Keep runnable code in top-level assets, not inside section codeBlocks.\n"
+                    "- Keep identity minimal (no universities/locations)."
+                }
+            };
+
+            json repairUser = {
+                {"role", "user"},
+                {"content",
+                    std::string("MODE=") + (wantsCodeAssets ? "report_plus_assets" : "report_only") +
+                    "\nPROMPT:\n" + prompt +
+                    "\n\nDESIGN_BRIEF:\n" + designBrief +
+                    "\n\nTEMPLATE (for rendered_html):\n" + templateHtml +
+                    "\n\nDRAFT_JSON:\n" + data.dump()
+                }
+            };
+
+            json repairReq = {
+                {"model", resolvedModel},
+                {"messages", json::array({repairSystem, repairUser})},
+                {"temperature", 0.6},
+                {"max_tokens", 4096}
+            };
+            if (resolvedUrl.find("groq.com") == std::string::npos) {
+                repairReq["response_format"] = {{"type", "json_object"}};
+            }
+
+            auto repairResp = client.post(
+                resolvedUrl,
+                repairReq.dump(),
+                {
+                    {"Content-Type", "application/json"},
+                    {"Authorization", "Bearer " + cleanKey}
+                }
+            );
+
+            if (repairResp.ok()) {
+                try {
+                    auto rj = json::parse(repairResp.body);
+                    auto rtext = rj["choices"][0]["message"]["content"].get<std::string>();
+                    std::string rclean = utils::extractJson(rtext);
+                    auto rdata = json::parse(rclean);
+
+                    // Re-run the same extraction logic by overwriting 'data' and re-parsing via a small local lambda.
+                    // (Keep this minimal: update only the fields that commonly affect perceived quality.)
+                    content.title        = rdata.value("title", content.title);
+                    content.subtitle     = rdata.value("subtitle", content.subtitle);
+                    content.abstractText = rdata.value("abstract", content.abstractText);
+                    content.discipline   = rdata.value("discipline", content.discipline);
+                    content.renderedHtml = rdata.value("rendered_html", content.renderedHtml);
+
+                    // Sections (replace)
+                    content.sections.clear();
+                    if (rdata.contains("sections")) {
+                        for (auto& sec : rdata["sections"]) {
+                            Section s;
+                            s.heading = sec.value("heading", "Section");
+                            s.body    = sec.value("body", "");
+
+                            if (sec.contains("codeBlocks")) {
+                                for (auto& cb : sec["codeBlocks"]) {
+                                    CodeBlock block;
+                                    block.filename = cb.value("filename", "script.py");
+                                    block.language = cb.value("language", "text");
+                                    block.code     = cb.value("code", "");
+                                    if (!block.code.empty()) s.codeBlocks.push_back(block);
+                                }
+                            }
+                            if (sec.contains("charts")) {
+                                for (auto& ch : sec["charts"]) {
+                                    ChartData cd;
+                                    std::string type = ch.value("type", "bar");
+                                    if (type == "line") cd.type = ChartData::Type::Line;
+                                    else if (type == "pie") cd.type = ChartData::Type::Pie;
+                                    else cd.type = ChartData::Type::Bar;
+                                    cd.title = ch.value("title", "Chart");
+                                    if (ch.contains("labels") && ch["labels"].is_array()) {
+                                        for (auto& item : ch["labels"]) {
+                                            if (item.is_string()) cd.labels.push_back(item.get<std::string>());
+                                            else if (item.is_number()) cd.labels.push_back(item.dump());
+                                        }
+                                    }
+                                    if (ch.contains("values") && ch["values"].is_array()) {
+                                        for (auto& item : ch["values"]) {
+                                            if (item.is_number()) cd.values.push_back(item.get<float>());
+                                            else if (item.is_string()) {
+                                                try { cd.values.push_back(std::stof(item.get<std::string>())); } catch(...) {}
+                                            }
+                                        }
+                                    }
+                                    s.charts.push_back(cd);
+                                }
+                            }
+                            content.sections.push_back(s);
+                        }
+                    }
+
+                    // References (replace)
+                    content.references.clear();
+                    if (rdata.contains("references") && rdata["references"].is_array()) {
+                        for (auto& item : rdata["references"]) {
+                            if (item.is_string()) content.references.push_back(item.get<std::string>());
+                            else if (item.is_number()) content.references.push_back(item.dump());
+                        }
+                    }
+
+                    // Assets (replace)
+                    content.assets.clear();
+                    if (rdata.contains("assets") && rdata["assets"].is_array()) {
+                        for (auto& asset : rdata["assets"]) {
+                            CodeBlock block;
+                            block.filename = asset.value("filename", "asset.txt");
+                            block.language = asset.value("language", "text");
+                            block.code     = asset.value("code", "");
+                            if (!block.code.empty()) content.assets.push_back(block);
+                        }
+                    }
+
+                    normalizeAssets(content, wantsCodeAssets);
+
+                    if (!content.renderedHtml.empty() && !isRenderedHtmlAcceptable(content.renderedHtml)) {
+                        content.renderedHtml.clear();
+                    }
+                } catch (...) {
+                    // If repair parsing fails, keep first-pass content.
+                }
+            }
         }
 
     } catch (const std::exception& e) {
@@ -278,6 +715,7 @@ ReportContent Agent::generateWithLLM(const std::string& prompt) {
         return generateDemo(prompt);
     }
 
+    normalizeAssets(content, wantsCodeAssets);
     return content;
 }
 
@@ -395,22 +833,23 @@ ReportContent Agent::generateDemo(const std::string& prompt) {
             "code provided in the appendices.";
 
         // Add sample code if discipline is technical
-        if (c.discipline == "Computer Science" || c.discipline == "Data Science" ||
-            c.discipline == "Mathematics") {
+        if (topicRequiresCode(prompt)) {
             CodeBlock cb;
             cb.language = "python";
+            cb.filename = "analysis_utils.py";
             cb.code =
                 "import numpy as np\n"
                 "from sklearn.model_selection import cross_val_score\n"
                 "from sklearn.preprocessing import StandardScaler\n\n"
-                "# Data preprocessing pipeline\n"
-                "scaler = StandardScaler()\n"
-                "X_scaled = scaler.fit_transform(X_train)\n\n"
-                "# Cross-validation assessment\n"
-                "scores = cross_val_score(model, X_scaled, y_train, cv=10,\n"
-                "                        scoring='accuracy')\n"
-                "print(f'Mean CV Accuracy: {scores.mean():.4f} +/- {scores.std():.4f}')";
-            s.codeBlocks.push_back(cb);
+                "def evaluate_model(model, X_train, y_train):\n"
+                "    scaler = StandardScaler()\n"
+                "    X_scaled = scaler.fit_transform(X_train)\n"
+                "    scores = cross_val_score(model, X_scaled, y_train, cv=10, scoring='accuracy')\n"
+                "    return {\n"
+                "        'mean_accuracy': float(scores.mean()),\n"
+                "        'std_accuracy': float(scores.std())\n"
+                "    }\n";
+            c.assets.push_back(cb);
         }
         c.sections.push_back(s);
     }
@@ -541,11 +980,4 @@ ReportContent Agent::generateDemo(const std::string& prompt) {
     return c;
 }
 
-// Pipeline entry point
-
-ReportContent Agent::generate(const std::string& prompt) {
-    if (hasApiKey()) {
-        return generateWithLLM(prompt);
-    }
-    return generateDemo(prompt);
-}
+// End of Agent implementation

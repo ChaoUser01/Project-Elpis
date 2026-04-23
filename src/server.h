@@ -2,6 +2,7 @@
 #include <string>
 #include <map>
 #include <mutex>
+#include <vector>
 #include "user_ledger.h"
 
 // Session state tracking
@@ -11,6 +12,7 @@ struct SessionState {
     bool isError = false;
     std::string pdfUrl = "";
     std::string reportTitle = "";
+    std::string ownerStudentId = "";
     std::vector<std::string> assets; // list of asset filenames
 };
 

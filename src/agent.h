@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <optional>
 #include "chart_renderer.h"
 
 // Content structures
@@ -28,6 +29,8 @@ struct ReportContent {
     std::vector<Section> sections;
     std::vector<std::string> references;
     std::string discipline;   // e.g. "Computer Science", "Engineering"
+    std::string renderedHtml;
+    std::vector<CodeBlock> assets;
 };
 
 // Agent handles prompt analysis and content generation
@@ -46,9 +49,18 @@ public:
     void setModel(const std::string& model) { model_ = model; }
 
     // Main pipeline: prompt → structured report content.
-    ReportContent generate(const std::string& prompt);
+    ReportContent generate(const std::string& prompt,
+                           const std::string& templateHtml = "",
+                           const std::string& designBrief = "");
 
 private:
+    struct IntentDecision {
+        bool reportOnly = true;     // true => forbid assets + code blocks
+        bool wantsAssets = false;   // true => allow assets + code blocks
+        double confidence = 0.0;    // 0..1
+        std::string reason;         // internal diagnostics
+    };
+
     std::string apiKey_;
     std::string provider_;   // "groq", "gemini", "openai", or empty (auto-detect)
     std::string baseUrl_;    // explicit override
@@ -57,12 +69,21 @@ private:
     // Resolves the actual URL and model to use based on provider/key
     void resolveEndpoint(std::string& outUrl, std::string& outModel);
 
-    // LLM-based generation
-    ReportContent generateWithLLM(const std::string& prompt);
-
     // Demo mode: returns rich sample content based on prompt keywords
     ReportContent generateDemo(const std::string& prompt);
 
     // Detect discipline from prompt
     std::string detectDiscipline(const std::string& prompt);
+
+    // Decide whether the request actually needs implementation assets.
+    bool topicRequiresCode(const std::string& prompt) const;
+
+    // LLM-backed intent classifier: report-only vs report+assets.
+    IntentDecision classifyIntent(const std::string& prompt, const std::string& templateHtml);
+
+    // Basic HTML validation/safety gate for PDF rendering.
+    static bool isRenderedHtmlAcceptable(const std::string& html);
+
+    // Keep code deliverables separate from the printable report body.
+    static void normalizeAssets(ReportContent& content, bool wantsCodeAssets);
 };

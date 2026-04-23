@@ -4,6 +4,7 @@
 #include <mutex>
 #include <chrono>
 #include <vector>
+#include <optional>
 
 // User record in the Sovereign Ledger
 
@@ -36,7 +37,7 @@ public:
     UserLedger();
 
     // Set the data directory for persistence
-    void setDataDir(const std::string& dir) { dataDir_ = dir; }
+    void setDataDir(const std::string& dir);
 
     // Phase 1: Account Claiming
     std::string claim(const std::string& studentId, const std::string& passphrase);
@@ -48,16 +49,19 @@ public:
                       std::string& outError);
 
     // Session validation
-    const AuthSession* validateSession(const std::string& token);
+    std::optional<AuthSession> validateSession(const std::string& token);
 
     // Logout
     void logout(const std::string& token);
 
     // Get user record by student ID
-    const UserRecord* getUser(const std::string& studentId);
+    std::optional<UserRecord> getUser(const std::string& studentId);
 
     // Get all student IDs
     std::vector<std::pair<std::string, std::string>> getStudentList();
+
+    // Resolve template path for a student (checks for ID-specific template)
+    std::string resolveTemplatePath(const std::string& studentId);
 
     // Check if user has a saved API key
     bool hasSavedKey(const std::string& studentId);

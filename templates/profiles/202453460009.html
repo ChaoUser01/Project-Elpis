@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    @page { size: A4; margin: 16mm 16mm 18mm 16mm; }
+    :root { --navy:#15315b; --blue:#315e9a; --mist:#eef3fb; --ink:#16202a; --muted:#506175; }
+    body { margin:0; color:var(--ink); font-family: Georgia, "Times New Roman", serif; line-height:1.6; }
+    .masthead { background:linear-gradient(135deg, var(--navy), var(--blue)); color:#fff; padding:12mm 12mm 10mm; }
+    .eyebrow { text-transform:uppercase; letter-spacing:.18em; font-size:8.5pt; opacity:.8; }
+    h1 { margin:4mm 0 2mm; font-size:25pt; line-height:1.1; }
+    .subtitle { font-size:11.5pt; font-style:italic; opacity:.9; }
+    .meta { display:flex; justify-content:space-between; gap:8mm; margin-top:8mm; font-size:9.5pt; }
+    .shell { padding:8mm 5mm 0 5mm; }
+    .abstract { background:var(--mist); border-left:5px solid var(--navy); padding:5mm 6mm; margin-bottom:8mm; }
+    h2 { color:var(--navy); font-size:14pt; margin:8mm 0 3mm; border-bottom:1px solid #c8d5e8; padding-bottom:2mm; }
+    .body { text-align:justify; font-size:11pt; }
+    .figure { margin-top:4mm; padding:3mm 4mm; border:1px solid #ccd8ea; background:#fafcff; color:var(--muted); font-size:9.5pt; }
+    .references { margin-top:10mm; border-top:2px solid var(--navy); padding-top:4mm; font-size:10pt; }
+    .references ol { padding-left:5mm; }
+  </style>
+</head>
+<body>
+  <header class="masthead">
+    <div class="eyebrow">Research Folio</div>
+    <h1>{{ title }}</h1>
+    {% if subtitle %}<div class="subtitle">{{ subtitle }}</div>{% endif %}
+    <div class="meta">
+      <div>{{ author }}{% if student_id %} | {{ student_id }}{% endif %}</div>
+      <div>{{ discipline }} | {{ date }}</div>
+    </div>
+  </header>
+  <main class="shell">
+    {% if abstract %}<section class="abstract"><strong>Abstract</strong><div>{{ abstract }}</div></section>{% endif %}
+    {% for section in sections %}
+    <section>
+      <h2>{{ section.heading }}</h2>
+      <div class="body">{{ section.body }}</div>
+      {% for chart in section.charts %}<div class="figure">{{ chart.title }} ({{ chart.type }})</div>{% endfor %}
+    </section>
+    {% endfor %}
+    {% if references %}
+    <section class="references"><strong>References</strong><ol>{% for ref in references %}<li>{{ ref }}</li>{% endfor %}</ol></section>
+    {% endif %}
+  </main>
+</body>
+</html>
